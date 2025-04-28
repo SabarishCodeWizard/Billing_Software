@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR Fabrics - Invoice History</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        /* Back Link */
+        .back-to-invoice {
+            display: inline-block;
+            margin-bottom: 2rem;
+            text-decoration: none;
+            color: #4a6baf;
+            font-weight: 600;
+            transition: color 0.3s;
+            padding: 8px 15px;
+            border-radius: 5px;
+            background-color: rgba(74, 107, 175, 0.1);
+        }
+
+        .back-to-invoice:hover {
+            color: #3a5693;
+            background-color: rgba(74, 107, 175, 0.2);
+        }
+
+        /* Section Heading */
+        .old-invoices-section h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e1e5eb;
+            position: relative;
+        }
+
+        .old-invoices-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 150px;
+            height: 2px;
+            background-color: #4a6baf;
+        }
+
+        /* Search Controls */
+        .search-controls {
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4a6baf;
+            box-shadow: 0 0 0 3px rgba(74, 107, 175, 0.2);
+        }
+
+        .search-btn {
+            grid-column: -1;
+            padding: 0.75rem 1.5rem;
+            background-color: #4a6baf;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            height: fit-content;
+        }
+
+        .search-btn:hover {
+            background-color: #3a5693;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Invoice Results */
+        .invoice-results {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        #invoiceResultsTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #invoiceResultsTable thead {
+            background-color: #4a6baf;
+            color: white;
+        }
+
+        #invoiceResultsTable th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        #invoiceResultsTable tbody tr {
+            border-bottom: 1px solid #edf2f7;
+            transition: background-color 0.2s;
+        }
+
+        #invoiceResultsTable tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        #invoiceResultsTable td {
+            padding: 1rem;
+            color: #4a5568;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 0.75rem;
+            margin-right: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+        }
+
+        .action-btn.view {
+            background-color: #38a169;
+        }
+
+        .action-btn.print {
+            background-color: #4a6baf;
+        }
+
+        .action-btn.delete {
+            background-color: #e53e3e;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .action-btn i {
+            margin-right: 0.3rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .search-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .search-btn {
+                grid-column: auto;
+            }
+
+            #invoiceResultsTable {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #cbd5e0;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Add some animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .invoice-results {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Status Badges (optional) */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-paid {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-pending {
+            background-color: #feebc8;
+            color: #7b341e;
+        }
+
+        .status-cancelled {
+            background-color: #fed7d7;
+            color: #742a2a;
+        }
+    </style>
+    <div class="container">
+        <a href="index.html" class="back-to-invoice">← Back to Invoice Generator</a>
+
+        <div class="old-invoices-section">
+            <h2>Invoice History</h2>
+            <div class="search-controls">
+                <div class="form-group">
+                    <label for="searchInvoiceNo">Invoice Number:</label>
+                    <input type="text" id="searchInvoiceNo" placeholder="Enter invoice number">
+                </div>
+                <div class="form-group">
+                    <label for="searchCustomer">Customer Name:</label>
+                    <input type="text" id="searchCustomer" placeholder="Enter customer name">
+                </div>
+                <div class="form-group">
+                    <label for="searchDateFrom">From Date:</label>
+                    <input type="date" id="searchDateFrom">
+                </div>
+                <div class="form-group">
+                    <label for="searchDateTo">To Date:</label>
+                    <input type="date" id="searchDateTo">
+                </div>
+                <button id="searchInvoices" class="search-btn">Search</button>
+            </div>
+
+            <div class="invoice-results">
+                <table id="invoiceResultsTable">
+                    <thead>
+                        <tr>
+                            <th>Invoice No</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceResultsBody">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/invoice-history.js"></script>
+</body>
+
+</html>

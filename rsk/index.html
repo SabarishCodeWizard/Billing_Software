@@ -3,164 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>R.S.K ENTERPRISES - Billing Software</title>
+    <title>PR Fabrics Billing Software</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>PR FABRICS - Invoice Generator</h1>
+        <h1>PR Fabrics Billing Software</h1>
         
-        <div class="form-section">
-            <h2>Invoice Details</h2>
-            <div class="form-row">
-                <div>
-                    <label for="invoiceNo">Invoice No:</label>
-                    <input type="text" id="invoiceNo" value="1">
+        <div class="form-container">
+            <div class="form-section">
+                <h2>Company Details</h2>
+                <div class="form-group">
+                    <label for="companyName">Company Name:</label>
+                    <input type="text" id="companyName" value="PR FABRICS" readonly>
                 </div>
-                <div>
-                    <label for="invoiceDate">Date:</label>
-                    <input type="date" id="invoiceDate" value="2025-02-05">
+                <div class="form-group">
+                    <label for="companyAddress">Address:</label>
+                    <textarea id="companyAddress" readonly>42/65,THIRUNEELAKANDA PURAM, 1ST STREET, TIRUPUR 641-602</textarea>
                 </div>
-            </div>
-            
-            <div class="form-row">
-                <div>
-                    <label for="deliveryNote">Delivery Note:</label>
-                    <input type="text" id="deliveryNote">
+                <div class="form-group">
+                    <label for="companyGST">GSTIN:</label>
+                    <input type="text" id="companyGST" value="33CLJPG4331G1ZG" readonly>
                 </div>
-                <div>
-                    <label for="modeTel">Mode/Tel:</label>
-                    <input type="text" id="modeTel">
+                <div class="form-group">
+                    <label for="companyPhone">Cell No:</label>
+                    <input type="text" id="companyPhone" value="9952520181" readonly>
                 </div>
             </div>
-            
-            <!-- Add more fields as needed -->
-        </div>
-        
-        <div class="form-section">
-            <h2>Consignee Details</h2>
-            <div class="form-row">
-                <div>
-                    <label for="consigneeName">Name:</label>
-                    <input type="text" id="consigneeName" value="R.S.K. Enterprises">
+
+            <div class="form-section">
+                <h2>Customer Details</h2>
+                <div class="form-group">
+                    <label for="customerName">Bill to Party Name:</label>
+                    <input type="text" id="customerName" placeholder="e.g., SLN TEX">
                 </div>
-                <div>
-                    <label for="consigneeContact">Contact Person:</label>
-                    <input type="text" id="consigneeContact" value="PR Fabrics">
+                <div class="form-group">
+                    <label for="customerAddress">Address:</label>
+                    <textarea id="customerAddress" placeholder="Customer address"></textarea>
                 </div>
-            </div>
-            
-            <div class="form-row">
-                <div>
-                    <label for="consigneeAddress">Address:</label>
-                    <textarea id="consigneeAddress">76(3) Padmavathipuram, Angeripalayam Road, Tiruppur - 641603</textarea>
+                <div class="form-group">
+                    <label for="customerState">State:</label>
+                    <input type="text" id="customerState" value="TAMILNADU">
+                </div>
+                <div class="form-group">
+                    <label for="customerGST">GSTIN (if available):</label>
+                    <input type="text" id="customerGST" placeholder="Customer GSTIN">
                 </div>
             </div>
-            
-            <div class="form-row">
-                <div>
-                    <label for="consigneePhone">Phone:</label>
-                    <input type="text" id="consigneePhone" value="8608127349">
+
+            <div class="form-section">
+                <h2>Invoice Details</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="invoiceNumber">Invoice No:</label>
+                        <input type="text" id="invoiceNumber" placeholder="015">
+                    </div>
+                    <div class="form-group">
+                        <label for="invoiceDate">Invoice Date:</label>
+                        <input type="date" id="invoiceDate">
+                    </div>
                 </div>
-                <div>
-                    <label for="consigneeGST">GSTIN/UIN:</label>
-                    <input type="text" id="consigneeGST" value="33EQEPR2516A12B">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="supplyDate">Date of Supply:</label>
+                        <input type="date" id="supplyDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="reverseCharge">Reverse Charge (Y/N):</label>
+                        <select id="reverseCharge">
+                            <option value="N">N</option>
+                            <option value="Y">Y</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="form-section">
-            <h2>Items</h2>
-            <table id="itemsTable">
-                <thead>
-                    <tr>
-                        <th>S.No</th>
-                        <th>Description</th>
-                        <th>HSN/SAC</th>
-                        <th>Quantity</th>
-                        <th>Rate</th>
-                        <th>Per</th>
-                        <th>Amount</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Items will be added here dynamically -->
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="6" class="text-right">Grand Total (Including GST)</td>
-                        <td id="totalAmount">0.00</td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
-            <button id="addItemBtn" class="btn">Add Item</button>
-        </div>
-        
-        <div class="form-section">
-            <h2>Tax Details</h2>
-            <table id="taxTable">
-                <thead>
-                    <tr>
-                        <th>HSN/SAC</th>
-                        <th>Taxable Value</th>
-                        <th>Central Tax</th>
-                        <th>State Tax</th>
-                        <th>Total Tax</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Tax rows will be added here dynamically -->
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4" class="text-right">Total Tax Amount</td>
-                        <td id="totalTax">0.00</td>
-                    </tr>
-                </tfoot>
-            </table>
-            <div class="form-row">
-                <div>
-                    <label>Grand Total in Words:</label>
-                    <span id="taxInWords">INR Zero Only</span>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="transportMode">Transport Mode:</label>
+                        <input type="text" id="transportMode">
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleNumber">Vehicle number:</label>
+                        <input type="text" id="vehicleNumber">
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="form-section">
-            <h2>Bank Details</h2>
-            <div class="form-row">
-                <div>
+
+            <div class="form-section">
+                <h2>Bank Details</h2>
+                <div class="form-group">
                     <label for="bankName">Bank Name:</label>
-                    <input type="text" id="bankName" value="Karur Vysya Bank">
+                    <input type="text" id="bankName" value="CANARA BANK">
                 </div>
-                <div>
-                    <label for="accountNo">Account No:</label>
-                    <input type="text" id="accountNo">
+                <div class="form-group">
+                    <label for="accountNumber">Bank A/C No:</label>
+                    <input type="text" id="accountNumber" value="65631010003339">
                 </div>
-            </div>
-            
-            <div class="form-row">
-                <div>
-                    <label for="branchIFSC">Branch & IFC Code:</label>
-                    <input type="text" id="branchIFSC" value="KVBL0001235">
+                <div class="form-group">
+                    <label for="ifscCode">Bank IFSC Code:</label>
+                    <input type="text" id="ifscCode" value="CNRB0016563">
                 </div>
             </div>
-        </div>
-        
-        <div class="form-section">
-            <h2>Declaration</h2>
-            <textarea id="declaration">We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</textarea>
-        </div>
-        
-        <div class="action-buttons">
-            <button id="generatePdfBtn" class="btn primary">Generate PDF</button>
-            <button id="resetFormBtn" class="btn">Reset Form</button>
+
+            <div class="form-section">
+                <h2>Products</h2>
+                <table id="productTable">
+                    <thead>
+                        <tr>
+                            <th>S.No.</th>
+                            <th>Product Description</th>
+                            <th>HSN Code</th>
+                            <th>Qty</th>
+                            <th>Rate</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><input type="text" class="product-desc" placeholder="Product description"></td>
+                            <td><input type="text" class="hsn-code" placeholder="HSN code"></td>
+                            <td><input type="number" class="quantity" min="1" value="1"></td>
+                            <td><input type="number" class="rate" min="0" step="0.01" value="0"></td>
+                            <td><span class="amount">0.00</span></td>
+                            <td><button class="remove-btn">Remove</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button id="addProductBtn">Add Product</button>
+            </div>
+
+            <div class="form-section">
+                <h2>Tax & Total</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cgst">CGST (2.5%):</label>
+                        <input type="text" id="cgst" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="sgst">SGST (2.5%):</label>
+                        <input type="text" id="sgst" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="igst">IGST:</label>
+                    <input type="text" id="igst" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="taxableValue">Taxable Value:</label>
+                    <input type="text" id="taxableValue" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="totalTax">Total Tax Amount:</label>
+                    <input type="text" id="totalTax" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="roundOff">Round off:</label>
+                    <input type="text" id="roundOff" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="grandTotal">Grand Total:</label>
+                    <input type="text" id="grandTotal" readonly>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Signature</h2>
+                <div class="form-group">
+                    <label for="signature">Signature of Customer:</label>
+                    <input type="text" id="signature" placeholder="Authorized signatory">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="calculateBtn">Calculate</button>
+                <button id="generatePdfBtn">Generate PDF</button>
+                <button id="resetBtn">Reset</button>
+            </div>
         </div>
     </div>
-    
-    <script src="html2pdf.bundle.js"></script>
+
     <script src="script.js"></script>
 </body>
 </html>

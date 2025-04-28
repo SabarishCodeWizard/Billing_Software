@@ -534,3 +534,13 @@ body {
         display: none;
     }
 }
+
+.footer a[href^="tel:"] {
+    color: var(--light-gray);
+    text-decoration: none;
+}
+
+.footer a[href^="tel:"]:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}

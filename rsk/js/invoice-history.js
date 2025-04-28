@@ -1,3 +1,8 @@
+// Check if user is logged in
+if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+    window.location.href = 'login.html';
+}
+
 
 // Database initialization
 let db;
@@ -6,23 +11,23 @@ function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open('PRFabricsInvoicesDB', 1);
 
-        request.onerror = function(event) {
+        request.onerror = function (event) {
             console.error('Database error:', event.target.error);
             reject('Database error');
         };
 
-        request.onupgradeneeded = function(event) {
+        request.onupgradeneeded = function (event) {
             db = event.target.result;
-            
+
             // Create an object store for invoices
             const invoiceStore = db.createObjectStore('invoices', { keyPath: 'invoiceNo' });
-            
+
             // Create indexes for searching
             invoiceStore.createIndex('customerName', 'customerName', { unique: false });
             invoiceStore.createIndex('invoiceDate', 'invoiceDate', { unique: false });
         };
 
-        request.onsuccess = function(event) {
+        request.onsuccess = function (event) {
             db = event.target.result;
             resolve();
         };
@@ -41,14 +46,14 @@ function saveInvoiceToDB() {
         const invoiceStore = transaction.objectStore('invoices');
 
         const invoiceData = getInvoiceData();
-        
+
         const request = invoiceStore.put(invoiceData);
 
-        request.onsuccess = function() {
+        request.onsuccess = function () {
             resolve();
         };
 
-        request.onerror = function(event) {
+        request.onerror = function (event) {
             console.error('Error saving invoice:', event.target.error);
             reject('Error saving invoice');
         };
@@ -132,13 +137,13 @@ function searchInvoices() {
 
     const transaction = db.transaction(['invoices'], 'readonly');
     const invoiceStore = transaction.objectStore('invoices');
-    
+
     let request;
-    
+
     if (invoiceNo) {
         // Search by exact invoice number
         request = invoiceStore.get(invoiceNo);
-        request.onsuccess = function(event) {
+        request.onsuccess = function (event) {
             const result = event.target.result;
             displaySearchResults(result ? [result] : []);
         };
@@ -146,15 +151,15 @@ function searchInvoices() {
         // Search by other criteria
         const results = [];
         let index;
-        
+
         if (customerName) {
             index = invoiceStore.index('customerName');
             request = index.openCursor(IDBKeyRange.only(customerName));
         } else if (dateFrom || dateTo) {
             index = invoiceStore.index('invoiceDate');
-            const range = dateFrom && dateTo 
+            const range = dateFrom && dateTo
                 ? IDBKeyRange.bound(dateFrom, dateTo)
-                : dateFrom 
+                : dateFrom
                     ? IDBKeyRange.lowerBound(dateFrom)
                     : IDBKeyRange.upperBound(dateTo);
             request = index.openCursor(range);
@@ -162,8 +167,8 @@ function searchInvoices() {
             // Get all invoices if no search criteria
             request = invoiceStore.openCursor();
         }
-        
-        request.onsuccess = function(event) {
+
+        request.onsuccess = function (event) {
             const cursor = event.target.result;
             if (cursor) {
                 results.push(cursor.value);
@@ -173,8 +178,8 @@ function searchInvoices() {
             }
         };
     }
-    
-    request.onerror = function(event) {
+
+    request.onerror = function (event) {
         console.error('Search error:', event.target.error);
     };
 }
@@ -183,14 +188,14 @@ function searchInvoices() {
 function displaySearchResults(invoices) {
     const tbody = document.getElementById('invoiceResultsBody');
     tbody.innerHTML = '';
-    
+
     if (invoices.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = '<td colspan="5">No invoices found</td>';
         tbody.appendChild(row);
         return;
     }
-    
+
     invoices.forEach(invoice => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -202,10 +207,10 @@ function displaySearchResults(invoices) {
         `;
         tbody.appendChild(row);
     });
-    
+
     // Add event listeners to view buttons
     document.querySelectorAll('.view-invoice-btn').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             loadInvoice(this.getAttribute('data-invoice'));
         });
     });
@@ -216,8 +221,8 @@ function loadInvoice(invoiceNo) {
     const transaction = db.transaction(['invoices'], 'readonly');
     const invoiceStore = transaction.objectStore('invoices');
     const request = invoiceStore.get(invoiceNo);
-    
-    request.onsuccess = function(event) {
+
+    request.onsuccess = function (event) {
         const invoice = event.target.result;
         if (invoice) {
             populateInvoiceForm(invoice);
@@ -225,8 +230,8 @@ function loadInvoice(invoiceNo) {
             alert('Invoice not found');
         }
     };
-    
-    request.onerror = function(event) {
+
+    request.onerror = function (event) {
         console.error('Error loading invoice:', event.target.error);
         alert('Error loading invoice');
     };
@@ -247,11 +252,11 @@ function populateInvoiceForm(invoice) {
     document.getElementById('supplyDate').value = invoice.supplyDate;
     document.getElementById('placeOfSupply').value = invoice.placeOfSupply;
     document.getElementById('reverseCharge').value = invoice.reverseCharge;
-    
+
     // Clear existing product rows
     const tbody = document.getElementById('productTableBody');
     tbody.innerHTML = '';
-    
+
     // Add product rows
     invoice.products.forEach((product, index) => {
         const row = document.createElement('tr');
@@ -267,12 +272,12 @@ function populateInvoiceForm(invoice) {
         `;
         tbody.appendChild(row);
     });
-    
+
     // Add tax data
     document.getElementById('cgstRate').value = invoice.taxData.cgstRate;
     document.getElementById('sgstRate').value = invoice.taxData.sgstRate;
     document.getElementById('igstRate').value = invoice.taxData.igstRate;
-    
+
     // Update calculated fields
     document.getElementById('subTotal').textContent = invoice.taxData.subTotal;
     document.getElementById('cgstAmount').textContent = invoice.taxData.cgstAmount;
@@ -310,7 +315,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Event listeners for buttons
     document.getElementById('addRow').addEventListener('click', addProductRow);
     document.getElementById('resetForm').addEventListener('click', resetForm);
-    document.getElementById('generatePDF').addEventListener('click', async function() {
+    document.getElementById('generatePDF').addEventListener('click', async function () {
         try {
             await saveInvoiceToDB();
             generatePDF();
@@ -356,12 +361,12 @@ function deleteInvoice(invoiceNo) {
         const invoiceStore = transaction.objectStore('invoices');
         const request = invoiceStore.delete(invoiceNo);
 
-        request.onsuccess = function() {
+        request.onsuccess = function () {
             alert(`Invoice ${invoiceNo} deleted successfully`);
             searchInvoices(); // Refresh the results
         };
 
-        request.onerror = function(event) {
+        request.onerror = function (event) {
             console.error('Error deleting invoice:', event.target.error);
             alert('Error deleting invoice');
         };
@@ -372,14 +377,14 @@ function deleteInvoice(invoiceNo) {
 function displaySearchResults(invoices) {
     const tbody = document.getElementById('invoiceResultsBody');
     tbody.innerHTML = '';
-    
+
     if (invoices.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = '<td colspan="5">No invoices found</td>';
         tbody.appendChild(row);
         return;
     }
-    
+
     invoices.forEach(invoice => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -394,17 +399,17 @@ function displaySearchResults(invoices) {
         `;
         tbody.appendChild(row);
     });
-    
+
     // Add event listeners to view buttons
     document.querySelectorAll('.view-invoice-btn').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             loadInvoice(this.getAttribute('data-invoice'));
         });
     });
-    
+
     // Add event listeners to remove buttons
     document.querySelectorAll('.remove-invoice-btn').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             deleteInvoice(this.getAttribute('data-invoice'));
         });
     });

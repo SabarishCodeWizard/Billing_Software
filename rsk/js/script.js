@@ -1,3 +1,11 @@
+// Logout functionality
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    sessionStorage.removeItem('isLoggedIn');
+    window.location.href = 'login.html';
+});
+
+
+
 // Add this at the top of script.js
 const DB_NAME = 'InvoiceDB';
 const DB_VERSION = 1;
@@ -413,3 +421,8 @@ function numberToWords(num) {
     return result.trim();
 }
 
+// Logout functionality
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    sessionStorage.removeItem('isLoggedIn');
+    window.location.href = 'login.html';
+});

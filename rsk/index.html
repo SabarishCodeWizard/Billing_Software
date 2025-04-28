@@ -8,6 +8,12 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        // Check if user is logged in
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
 </head>
 
 <body>
@@ -17,15 +23,13 @@
                 <a href="#" class="brand-name">Sabarish</a>
                 <span class="system-name">BILL SYSTEM</span>
             </h1>
-            <!-- <button id="generatePDF">Generate PDF</button>
-            <button id="resetForm">Reset Form</button> -->
+            <a href="invoice-history.html" class="view-history-btn">View Invoice History</a>
             <div class="button-group">
                 <button id="generatePDF">Generate PDF</button>
                 <button id="resetForm">Reset Form</button>
             </div>
-            <a href="invoice-history.html" class="view-history-btn">View Invoice History</a>
+            <button id="logoutBtn">Logout</button>
         </div>
-
 
         <div id="invoice" class="invoice-container">
             <div class="invoice-header">

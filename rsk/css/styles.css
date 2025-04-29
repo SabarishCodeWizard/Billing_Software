@@ -18,10 +18,33 @@
 }
 
 body {
-    background-color:whitesmoke;
-    color: #333;
-    line-height: 1.6;
-    padding: 20px;
+    background-color: #000;
+}
+
+.main {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    height: 1px;
+    width: 1px;
+    background-color: #fff;
+    border-radius: 50%;
+    box-shadow: -42vw -4vh 0px 0px #fff, 25vw -41vh 0px 0px #fff, -20vw 49vh 0px 1px #fff, 5vw 40vh 1px 1px #fff, 29vw 19vh 1px 0px #fff, -44vw -13vh 0px 0px #fff, 46vw 41vh 0px 1px #fff, -3vw -45vh 0px 1px #fff, 47vw 35vh 1px 0px #fff, 12vw -8vh 1px 0px #fff, -34vw 48vh 1px 1px #fff, 32vw 26vh 1px 1px #fff, 32vw -41vh 1px 1px #fff, 0vw 37vh 1px 1px #fff, 34vw -26vh 1px 0px #fff, -14vw -49vh 1px 0px #fff, -12vw 45vh 0px 1px #fff, -44vw -33vh 0px 1px #fff, -13vw 41vh 0px 0px #fff, -36vw -11vh 0px 1px #fff, -23vw -24vh 1px 0px #fff, -38vw -27vh 0px 1px #fff, 16vw -19vh 0px 0px #fff, 28vw 33vh 1px 0px #fff, -49vw -4vh 0px 0px #fff, 16vw 32vh 0px 1px #fff, 36vw -18vh 1px 0px #fff, -25vw -30vh 1px 0px #fff, -23vw 24vh 0px 1px #fff, -2vw -35vh 1px 1px #fff, -25vw 9vh 0px 0px #fff, -15vw -34vh 0px 0px #fff, -8vw -19vh 1px 0px #fff, -20vw -20vh 1px 1px #fff, 42vw 50vh 0px 1px #fff, -32vw 10vh 1px 0px #fff, -23vw -17vh 0px 0px #fff, 44vw 15vh 1px 0px #fff, -40vw 33vh 1px 1px #fff, -43vw 8vh 0px 0px #fff, -48vw -15vh 1px 1px #fff, -24vw 17vh 0px 0px #fff, -31vw 50vh 1px 0px #fff, 36vw -38vh 0px 1px #fff, -7vw 48vh 0px 0px #fff, 15vw -32vh 0px 0px #fff, 29vw -41vh 0px 0px #fff, 2vw 37vh 1px 0px #fff, 7vw -40vh 1px 1px #fff, 15vw 18vh 0px 0px #fff, 25vw -13vh 1px 1px #fff, -46vw -12vh 1px 1px #fff, -18vw 22vh 0px 0px #fff, 23vw -9vh 1px 0px #fff, 50vw 12vh 0px 1px #fff, 45vw 2vh 0px 0px #fff, 14vw -48vh 1px 0px #fff, 23vw 43vh 0px 1px #fff, -40vw 16vh 1px 1px #fff, 20vw -31vh 0px 1px #fff, -17vw 44vh 1px 1px #fff, 18vw -45vh 0px 0px #fff, 33vw -6vh 0px 0px #fff, 0vw 7vh 0px 1px #fff, -10vw -18vh 0px 1px #fff, -19vw 5vh 1px 0px #fff, 1vw 42vh 0px 0px #fff, 22vw 48vh 0px 1px #fff, 39vw -8vh 1px 1px #fff, -6vw -42vh 1px 0px #fff, -47vw 34vh 0px 0px #fff, -46vw 19vh 0px 1px #fff, -12vw -32vh 0px 0px #fff, -45vw -38vh 0px 1px #fff, -28vw 18vh 1px 0px #fff, -38vw -46vh 1px 1px #fff, 49vw -6vh 1px 1px #fff, -28vw 18vh 1px 1px #fff, 10vw -24vh 0px 1px #fff, -5vw -11vh 1px 1px #fff, 33vw -8vh 1px 0px #fff, -16vw 17vh 0px 0px #fff, 18vw 27vh 0px 1px #fff, -8vw -10vh 1px 1px #fff;
+
+    /* stars were too big with the layers above but left the code in case no one cares  -- as in, if noone's just that  one other loner who actually cares    */
+
+    box-shadow: 24vw 9vh 1px 0px #fff, 12vw -24vh 0px 1px #fff, -45vw -22vh 0px 0px #fff, -37vw -40vh 0px 1px #fff, 29vw 19vh 0px 1px #fff, 4vw -8vh 0px 1px #fff, -5vw 21vh 1px 1px #fff, -27vw 26vh 1px 1px #fff, -47vw -3vh 1px 1px #fff, -28vw -30vh 0px 1px #fff, -43vw -27vh 0px 1px #fff, 4vw 22vh 1px 1px #fff, 36vw 23vh 0px 0px #fff, -21vw 24vh 1px 1px #fff, -16vw 2vh 1px 0px #fff, -16vw -6vh 0px 0px #fff, 5vw 26vh 0px 0px #fff, -34vw 41vh 0px 0px #fff, 1vw 42vh 1px 1px #fff, 11vw -13vh 1px 1px #fff, 48vw -8vh 1px 0px #fff, 22vw -15vh 0px 0px #fff, 45vw 49vh 0px 0px #fff, 43vw -27vh 1px 1px #fff, 20vw -2vh 0px 0px #fff, 8vw 22vh 0px 1px #fff, 39vw 48vh 1px 1px #fff, -21vw -11vh 0px 1px #fff, -40vw 45vh 0px 1px #fff, 11vw -30vh 1px 0px #fff, 26vw 30vh 1px 0px #fff, 45vw -29vh 0px 1px #fff, -2vw 18vh 0px 0px #fff, -29vw -45vh 1px 0px #fff, -7vw -27vh 1px 1px #fff, 42vw 24vh 0px 0px #fff, 45vw -48vh 1px 0px #fff, -36vw -18vh 0px 0px #fff, -44vw 13vh 0px 1px #fff, 36vw 16vh 0px 1px #fff, 40vw 24vh 0px 0px #fff, 18vw 11vh 0px 0px #fff, -15vw -23vh 1px 0px #fff, -24vw 48vh 0px 1px #fff, 27vw -45vh 1px 0px #fff, -2vw -24vh 0px 1px #fff, -15vw -28vh 0px 0px #fff, -43vw 13vh 1px 0px #fff, 7vw 27vh 1px 0px #fff, 47vw 5vh 0px 0px #fff, -45vw 15vh 1px 1px #fff, -5vw -28vh 0px 1px #fff, 38vw 25vh 1px 1px #fff, -39vw -1vh 1px 0px #fff, 5vw 0vh 1px 0px #fff, 49vw 13vh 0px 0px #fff, 48vw 10vh 0px 1px #fff, 19vw -28vh 0px 0px #fff, 4vw 7vh 0px 0px #fff, 21vw 21vh 1px 1px #fff, -15vw -15vh 0px 1px #fff, -6vw -42vh 1px 0px #fff, -15vw 48vh 1px 1px #fff, -23vw 25vh 1px 1px #fff, -48vw 25vh 0px 1px #fff, -31vw -19vh 0px 1px #fff, 4vw 37vh 1px 1px #fff, -43vw 28vh 0px 0px #fff, 3vw -25vh 0px 1px #fff, -39vw 14vh 0px 1px #fff, -40vw 31vh 0px 1px #fff, 35vw -36vh 1px 1px #fff, 16vw 49vh 0px 0px #fff, 6vw 39vh 0px 0px #fff, 3vw -35vh 0px 1px #fff, -44vw -2vh 1px 0px #fff, -6vw 21vh 1px 0px #fff, 48vw 9vh 1px 1px #fff, -43vw 30vh 1px 1px #fff, 29vw -12vh 1px 1px #fff, -48vw 13vh 1px 0px #fff, -42vw 32vh 1px 1px #fff, 34vw 15vh 1px 1px #fff, 29vw -37vh 1px 1px #fff, 28vw 2vh 0px 0px #fff;
+    animation: zoom 16s alternate infinite;
+}
+
+@keyframes zoom {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1.5);
+    }
 }
 
 .container {
@@ -36,7 +59,7 @@ body {
     align-items: center;
     margin-bottom: 30px;
     padding: 15px 20px;
-    background-color: whitesmoke;
+    background-color: #000;
     border-radius: 8px;
 
 }
@@ -152,7 +175,8 @@ body {
 /* Alternative styling to match your existing buttons */
 #logoutBtn {
     padding: 10px 20px;
-    background-color: orangered; /* Slightly different red */
+    background-color: orangered;
+    /* Slightly different red */
     color: white;
     border: none;
     border-radius: 4px;
@@ -169,7 +193,8 @@ body {
 /* If you want it to appear in the button group */
 .button-group {
     display: flex;
-    gap: 10px; /* Adds space between buttons */
+    gap: 10px;
+    /* Adds space between buttons */
     flex-wrap: wrap;
 }
 
@@ -557,32 +582,140 @@ body {
     }
 }
 
-/* Print Styles */
+/* Reset and page setup for print */
+@page {
+    size: A4;
+    margin: 0;
+}
+
 @media print {
+    html, body {
+        width: 210mm;  /* A4 width */
+        height: 297mm; /* A4 height */
+        margin: 0;
+        padding: 0;
+    }
+    
     body {
         background-color: white;
-        padding: 0;
     }
-
+    
+    /* Hide controls for printing */
     .controls {
-        display: none;
+        display: none !important;
     }
-
-    .invoice-container {
-        box-shadow: none;
+    
+    /* Center the invoice container */
+    .container {
+        width: 210mm;
+        margin: 0 auto;
         padding: 0;
     }
-
+    
+    /* Make invoice fit on A4 */
+    .invoice-container {
+        width: 190mm;
+        max-width: 190mm;
+        padding: 10mm;
+        margin: 0 auto;
+        box-shadow: none;
+        box-sizing: border-box;
+        font-size: 10pt;
+    }
+    
+    /* Adjust table layout for printing */
+    #productTable {
+        width: 100%;
+        table-layout: fixed;
+        font-size: 9pt;
+    }
+    
+    #productTable th, #productTable td {
+        padding: 4px;
+        white-space: normal;
+        overflow: hidden;
+    }
+    
     #productTable input {
         border: none;
         background-color: transparent;
+        padding: 2px;
     }
-
-    button {
+    
+    /* Adjust column widths */
+    #productTable th:nth-child(1), #productTable td:nth-child(1) { width: 5%; }  /* S.No. */
+    #productTable th:nth-child(2), #productTable td:nth-child(2) { width: 25%; } /* Description */
+    #productTable th:nth-child(3), #productTable td:nth-child(3) { width: 10%; } /* HSN */
+    #productTable th:nth-child(4), #productTable td:nth-child(4) { width: 10%; } /* Qty */
+    #productTable th:nth-child(5), #productTable td:nth-child(5) { width: 10%; } /* Rate */
+    #productTable th:nth-child(6), #productTable td:nth-child(6) { width: 15%; } /* Amount */
+    #productTable th:nth-child(7), #productTable td:nth-child(7) { width: 15%; } /* Taxable */
+    #productTable th:nth-child(8), #productTable td:nth-child(8) { width: 10%; display: none; } /* Action (hidden) */
+    
+    /* Smaller text for calculation section */
+    .calculation-section {
+        font-size: 9pt;
+    }
+    
+    /* Hide buttons on print */
+    button, .remove-row, #addRow {
         display: none !important;
+    }
+    
+    /* More compact layout for header */
+    .invoice-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    
+    .company-details h2 {
+        font-size: 16pt;
+        margin-bottom: 5px;
+    }
+    
+    .company-details p {
+        font-size: 9pt;
+        margin-bottom: 2px;
+        line-height: 1.2;
+    }
+    
+    .invoice-title h2 {
+        font-size: 16pt;
+        margin-bottom: 8px;
+    }
+    
+    /* More compact billing info */
+    .billing-info {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 8px;
+    }
+    
+    .form-group label {
+        width: 100px;
+        font-size: 9pt;
+    }
+    
+    .form-group input, .form-group select {
+        padding: 2px 5px;
+        font-size: 9pt;
+    }
+    
+    /* Compact calculation section */
+    .tax-row {
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+    }
+    
+    .bank-details {
+        padding: 10px;
     }
 }
 
+/* Screen Styles - keep your existing regular CSS here */
 .footer {
     background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
     color: #ffffff;
@@ -810,28 +943,28 @@ body {
     .footer-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .footer-section {
         text-align: center;
     }
-    
+
     .social-links {
         justify-content: center;
     }
-    
+
     .footer-section h3::after {
         left: 50%;
         transform: translateX(-50%);
     }
-    
+
     .footer-section.links a:hover {
         transform: none;
     }
-    
+
     .contact-info p {
         justify-content: center;
     }
-    
+
     .footer-bottom-content {
         flex-direction: column;
     }
@@ -839,12 +972,20 @@ body {
 
 /* Animation */
 @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-    100% { transform: translateY(0px); }
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
 }
 
-.social-links a:hover, 
+.social-links a:hover,
 .developer-links a:hover {
     animation: float 1s ease infinite;
 }
@@ -861,4 +1002,18 @@ body {
 
 .view-history-btn:hover {
     background-color: #0b6dbe;
+}
+
+.dashboard {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: rgb(195, 184, 30);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.dashboard:hover {
+    background-color: rgb(172, 172, 13);
 }

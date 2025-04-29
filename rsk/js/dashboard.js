@@ -163,6 +163,12 @@ function getDoughnutChartOptions() {
 // Main data loading function
 async function loadDashboardData() {
     try {
+        // Show loading state
+        document.querySelectorAll('.card-value').forEach(el => {
+            el.classList.add('loading');
+            el.textContent = '--';
+        });
+        
         // Get filter values
         const timePeriod = document.getElementById('timePeriod').value;
         const customerFilter = document.getElementById('customerFilter').value;
@@ -171,6 +177,9 @@ async function loadDashboardData() {
         if (timePeriod === 'custom') {
             startDate = document.getElementById('startDate').value;
             endDate = document.getElementById('endDate').value;
+            if (!startDate || !endDate) {
+                throw new Error('Please select both start and end dates');
+            }
         } else {
             const dateRange = getDateRange(timePeriod);
             startDate = dateRange.start;
@@ -180,23 +189,86 @@ async function loadDashboardData() {
         // Get invoices from database
         const invoices = await getFilteredInvoices(startDate, endDate, customerFilter);
         
-        // Update summary cards
-        updateSummaryCards(invoices, timePeriod);
+        if (!invoices || invoices.length === 0) {
+            showNoDataMessage();
+            return;
+        }
         
-        // Update charts
+        // Update all dashboard components
+        updateSummaryCards(invoices, timePeriod);
         loadSalesTrendChart('day', invoices);
         loadCustomerDistributionChart(invoices);
         loadTaxBreakdownChart(invoices);
         loadProductPerformanceChart('quantity', invoices);
-        
-        // Update recent invoices table
         updateRecentInvoicesTable(invoices);
 
     } catch (error) {
         console.error('Error loading dashboard data:', error);
-        alert('Error loading dashboard data');
+        showErrorMessage('Error loading dashboard data: ' + error.message);
+    } finally {
+        // Remove loading state
+        document.querySelectorAll('.loading').forEach(el => {
+            el.classList.remove('loading');
+        });
     }
 }
+
+function showNoDataMessage() {
+    alert('No invoice data found for the selected filters');
+    // You could also update the UI to show a "no data" message
+}
+
+function showErrorMessage(message) {
+    // Create or show an error message element in your UI
+    const errorElement = document.getElementById('error-message') || createErrorMessageElement();
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+    
+    setTimeout(() => {
+        errorElement.style.display = 'none';
+    }, 5000);
+}
+
+function createErrorMessageElement() {
+    const div = document.createElement('div');
+    div.id = 'error-message';
+    div.style.position = 'fixed';
+    div.style.top = '20px';
+    div.style.right = '20px';
+    div.style.padding = '15px';
+    div.style.backgroundColor = '#ff4444';
+    div.style.color = 'white';
+    div.style.borderRadius = '5px';
+    div.style.zIndex = '1000';
+    div.style.display = 'none';
+    document.body.appendChild(div);
+    return div;
+}
+
+
+// Temporary debug function - call this in your console to inspect data
+async function debugInvoices() {
+    try {
+        const invoices = await getAllInvoices();
+        console.log('All invoices:', invoices);
+        
+        if (invoices.length > 0) {
+            console.log('First invoice structure:', invoices[0]);
+            if (invoices[0].products) {
+                console.log('First invoice products:', invoices[0].products);
+            }
+            if (invoices[0].taxData) {
+                console.log('First invoice tax data:', invoices[0].taxData);
+            }
+        }
+    } catch (error) {
+        console.error('Debug error:', error);
+    }
+}
+
+// Call this to see what's in your database
+debugInvoices();
+
 
 // Get date range based on selected period
 function getDateRange(period) {
@@ -413,15 +485,22 @@ function loadCustomerDistributionChart(invoices) {
 
 // Load tax breakdown chart
 function loadTaxBreakdownChart(invoices) {
-    // Calculate tax totals
     let cgstTotal = 0;
     let sgstTotal = 0;
     let igstTotal = 0;
     
     invoices.forEach(invoice => {
-        cgstTotal += parseFloat(invoice.taxData.cgstAmount) || 0;
-        sgstTotal += parseFloat(invoice.taxData.sgstAmount) || 0;
-        igstTotal += parseFloat(invoice.taxData.igstAmount) || 0;
+        // Handle cases where taxData might not exist
+        if (invoice.taxData) {
+            cgstTotal += parseFloat(invoice.taxData.cgstAmount) || 0;
+            sgstTotal += parseFloat(invoice.taxData.sgstAmount) || 0;
+            igstTotal += parseFloat(invoice.taxData.igstAmount) || 0;
+        } else if (invoice.cgstAmount) {
+            // Alternative structure
+            cgstTotal += parseFloat(invoice.cgstAmount) || 0;
+            sgstTotal += parseFloat(invoice.sgstAmount) || 0;
+            igstTotal += parseFloat(invoice.igstAmount) || 0;
+        }
     });
     
     // Update chart
@@ -441,21 +520,27 @@ function loadTaxBreakdownChart(invoices) {
 
 // Load product performance chart
 function loadProductPerformanceChart(metric, invoices) {
-    // Extract product data from all invoices
     const productData = {};
     
     invoices.forEach(invoice => {
-        invoice.products.forEach(product => {
-            const description = product.description || 'Unnamed Product';
+        // Handle both array and object product structures
+        const products = Array.isArray(invoice.products) 
+            ? invoice.products 
+            : invoice.items 
+            ? Object.values(invoice.items) 
+            : [];
+            
+        products.forEach(product => {
+            const description = product.description || product.productDescription || 'Unnamed Product';
+            const qty = parseFloat(product.qty) || parseFloat(product.quantity) || 0;
+            const amount = parseFloat(product.amount) || parseFloat(product.rate) * qty || 0;
+            
             if (!productData[description]) {
-                productData[description] = {
-                    quantity: 0,
-                    revenue: 0
-                };
+                productData[description] = { quantity: 0, revenue: 0 };
             }
             
-            productData[description].quantity += parseFloat(product.qty) || 0;
-            productData[description].revenue += parseFloat(product.amount) || 0;
+            productData[description].quantity += qty;
+            productData[description].revenue += amount;
         });
     });
     
@@ -550,6 +635,8 @@ async function initDB() {
                 store.createIndex('invoiceNo', 'invoiceNo', { unique: true });
                 store.createIndex('customerName', 'customerName', { unique: false });
                 store.createIndex('date', 'date', { unique: false });
+                store.createIndex('grandTotal', 'grandTotal', { unique: false });
+                store.createIndex('products', 'products', { unique: false });
             }
         };
 

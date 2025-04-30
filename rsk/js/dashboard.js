@@ -658,7 +658,7 @@ const DB_NAME = 'InvoiceDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'invoices';
 
-async function initDB() {
+function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -669,6 +669,9 @@ async function initDB() {
                 store.createIndex('invoiceNo', 'invoiceNo', { unique: true });
                 store.createIndex('customerName', 'customerName', { unique: false });
                 store.createIndex('date', 'date', { unique: false });
+                // Add new indexes for the new fields
+                store.createIndex('paidAmount', 'paidAmount', { unique: false });
+                store.createIndex('status', 'status', { unique: false });
             }
         };
 

@@ -23,6 +23,9 @@ function initDB() {
                 store.createIndex('invoiceNo', 'invoiceNo', { unique: true });
                 store.createIndex('customerName', 'customerName', { unique: false });
                 store.createIndex('date', 'date', { unique: false });
+                // Add new indexes for the new fields
+                store.createIndex('paidAmount', 'paidAmount', { unique: false });
+                store.createIndex('status', 'status', { unique: false });
             }
         };
 

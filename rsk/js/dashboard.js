@@ -634,7 +634,7 @@ function updateRecentInvoicesTable(invoices) {
             <td>${new Date(invoice.date).toLocaleDateString('en-IN')}</td>
             <td>${invoice.customerName || 'Unknown'}</td>
             <td>${formatCurrency(getInvoiceAmount(invoice))}</td>
-            <td><span class="status paid">Paid</span></td>
+            <td>${invoice.status || 'Pending'}</td>
             <td>
                 <button class="view-btn" data-invoice="${invoice.invoiceNo}">
                     <i class="fas fa-eye"></i> View

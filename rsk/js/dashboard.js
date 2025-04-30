@@ -1,5 +1,5 @@
 // Initialize dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     // Set default dates
     const today = new Date();
     document.getElementById('endDate').value = today.toISOString().split('T')[0];
@@ -38,16 +38,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // Event listeners for filter controls
-    document.getElementById('timePeriod').addEventListener('change', function() {
-        document.getElementById('customRangeGroup').style.display = 
+    document.getElementById('timePeriod').addEventListener('change', function () {
+        document.getElementById('customRangeGroup').style.display =
             this.value === 'custom' ? 'flex' : 'none';
     });
 
-    document.getElementById('applyFilters').addEventListener('click', async function() {
+    document.getElementById('applyFilters').addEventListener('click', async function () {
         await loadDashboardData();
     });
 
-    document.getElementById('resetFilters').addEventListener('click', function() {
+    document.getElementById('resetFilters').addEventListener('click', function () {
         document.getElementById('timePeriod').value = 'month';
         document.getElementById('customRangeGroup').style.display = 'none';
         document.getElementById('customerFilter').value = 'all';
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Event listeners for chart options
     document.querySelectorAll('.sales-trend .chart-option').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             document.querySelectorAll('.sales-trend .chart-option').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             loadSalesTrendChart(this.dataset.period);
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     document.querySelectorAll('.product-performance .chart-option').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             document.querySelectorAll('.product-performance .chart-option').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             loadProductPerformanceChart(this.dataset.metric);
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadDashboardData();
 
     // Logout functionality
-    document.getElementById('logoutBtn').addEventListener('click', function() {
+    document.getElementById('logoutBtn').addEventListener('click', function () {
         sessionStorage.removeItem('isLoggedIn');
         window.location.href = 'login.html';
     });
@@ -89,7 +89,7 @@ function getLineChartOptions(title) {
             legend: { position: 'top' },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                         return '₹' + context.raw.toLocaleString('en-IN');
                     }
                 }
@@ -99,7 +99,7 @@ function getLineChartOptions(title) {
             y: {
                 beginAtZero: true,
                 ticks: {
-                    callback: function(value) {
+                    callback: function (value) {
                         return '₹' + value.toLocaleString('en-IN');
                     }
                 }
@@ -115,7 +115,7 @@ function getBarChartOptions(title) {
             legend: { display: false },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                         if (context.dataset.label === 'Revenue') {
                             return '₹' + context.raw.toLocaleString('en-IN');
                         }
@@ -128,7 +128,7 @@ function getBarChartOptions(title) {
             y: {
                 beginAtZero: true,
                 ticks: {
-                    callback: function(value) {
+                    callback: function (value) {
                         if (title.includes('₹')) {
                             return '₹' + value.toLocaleString('en-IN');
                         }
@@ -147,7 +147,7 @@ function getDoughnutChartOptions() {
             legend: { position: 'right' },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                         const label = context.label || '';
                         const value = context.raw || 0;
                         const total = context.dataset.total || 1;
@@ -160,6 +160,16 @@ function getDoughnutChartOptions() {
     };
 }
 
+// Helper function to get invoice total amount regardless of property name
+function getInvoiceAmount(invoice) {
+    // Try all possible property names where the total might be stored
+    const total = parseFloat(invoice.total) ||
+        parseFloat(invoice.grandTotal) ||
+        parseFloat(invoice.totalAmount) ||
+        0;
+    return isNaN(total) ? 0 : total;
+}
+
 // Main data loading function
 async function loadDashboardData() {
     try {
@@ -168,7 +178,7 @@ async function loadDashboardData() {
             el.classList.add('loading');
             el.textContent = '--';
         });
-        
+
         // Get filter values
         const timePeriod = document.getElementById('timePeriod').value;
         const customerFilter = document.getElementById('customerFilter').value;
@@ -188,12 +198,17 @@ async function loadDashboardData() {
 
         // Get invoices from database
         const invoices = await getFilteredInvoices(startDate, endDate, customerFilter);
-        
+
+        // Examine first invoice for debugging
+        if (invoices.length > 0) {
+            console.log('First invoice data structure:', invoices[0]);
+        }
+
         if (!invoices || invoices.length === 0) {
             showNoDataMessage();
             return;
         }
-        
+
         // Update all dashboard components
         updateSummaryCards(invoices, timePeriod);
         loadSalesTrendChart('day', invoices);
@@ -223,7 +238,7 @@ function showErrorMessage(message) {
     const errorElement = document.getElementById('error-message') || createErrorMessageElement();
     errorElement.textContent = message;
     errorElement.style.display = 'block';
-    
+
     setTimeout(() => {
         errorElement.style.display = 'none';
     }, 5000);
@@ -245,39 +260,29 @@ function createErrorMessageElement() {
     return div;
 }
 
-
-// Temporary debug function - call this in your console to inspect data
-async function debugInvoices() {
-    try {
-        const invoices = await getAllInvoices();
-        console.log('All invoices:', invoices);
-        
+// Debugging helper - log invoice structure
+function logInvoiceStructure() {
+    getAllInvoices().then(invoices => {
         if (invoices.length > 0) {
-            console.log('First invoice structure:', invoices[0]);
-            if (invoices[0].products) {
-                console.log('First invoice products:', invoices[0].products);
-            }
-            if (invoices[0].taxData) {
-                console.log('First invoice tax data:', invoices[0].taxData);
-            }
+            console.log('Sample invoice structure:', invoices[0]);
+            console.log('Available properties:', Object.keys(invoices[0]));
+        } else {
+            console.log('No invoices found in database');
         }
-    } catch (error) {
-        console.error('Debug error:', error);
-    }
+    });
 }
 
-// Call this to see what's in your database
-debugInvoices();
-
+// Call this from browser console if needed
+// window.debugInvoices = logInvoiceStructure;
 
 // Get date range based on selected period
 function getDateRange(period) {
     const today = new Date();
     today.setHours(23, 59, 59, 999); // End of day
-    
+
     let startDate = new Date(today);
-    
-    switch(period) {
+
+    switch (period) {
         case 'today':
             startDate.setHours(0, 0, 0, 0);
             break;
@@ -301,7 +306,7 @@ function getDateRange(period) {
             startDate.setHours(0, 0, 0, 0);
             break;
     }
-    
+
     return {
         start: startDate.toISOString().split('T')[0],
         end: today.toISOString().split('T')[0]
@@ -311,22 +316,22 @@ function getDateRange(period) {
 // Get filtered invoices from database
 async function getFilteredInvoices(startDate, endDate, customerFilter) {
     const allInvoices = await getAllInvoices();
-    
+
     return allInvoices.filter(invoice => {
         const invoiceDate = new Date(invoice.date);
         const filterStartDate = new Date(startDate);
         const filterEndDate = new Date(endDate);
-        
+
         // Check date range
         if (invoiceDate < filterStartDate || invoiceDate > filterEndDate) {
             return false;
         }
-        
+
         // Check customer filter
         if (customerFilter !== 'all' && invoice.customerName !== customerFilter) {
             return false;
         }
-        
+
         return true;
     });
 }
@@ -334,27 +339,34 @@ async function getFilteredInvoices(startDate, endDate, customerFilter) {
 // Update summary cards
 function updateSummaryCards(invoices, currentPeriod) {
     // Calculate current period metrics
-    const currentTotalSales = invoices.reduce((sum, invoice) => sum + parseFloat(invoice.grandTotal), 0);
+    const currentTotalSales = invoices.reduce((sum, invoice) => {
+        // Use our helper function to get the total amount regardless of property name
+        return sum + getInvoiceAmount(invoice);
+    }, 0);
+
     const currentInvoiceCount = invoices.length;
     const currentAvgInvoice = currentInvoiceCount > 0 ? currentTotalSales / currentInvoiceCount : 0;
-    
+
     // Find top customer
     const customerSales = {};
     invoices.forEach(invoice => {
-        customerSales[invoice.customerName] = (customerSales[invoice.customerName] || 0) + parseFloat(invoice.grandTotal);
+        const customerName = invoice.customerName || 'Unknown Customer';
+        const amount = getInvoiceAmount(invoice);
+        customerSales[customerName] = (customerSales[customerName] || 0) + amount;
     });
-    
+
     let topCustomer = '-';
     let topCustomerSales = 0;
+
     if (Object.keys(customerSales).length > 0) {
         const sortedCustomers = Object.entries(customerSales).sort((a, b) => b[1] - a[1]);
         topCustomer = sortedCustomers[0][0];
         topCustomerSales = sortedCustomers[0][1];
     }
-    
+
     // Get previous period for comparison
     let previousPeriod;
-    switch(currentPeriod) {
+    switch (currentPeriod) {
         case 'today': previousPeriod = 'yesterday'; break;
         case 'week': previousPeriod = 'last week'; break;
         case 'month': previousPeriod = 'last month'; break;
@@ -362,24 +374,24 @@ function updateSummaryCards(invoices, currentPeriod) {
         case 'year': previousPeriod = 'last year'; break;
         default: previousPeriod = null;
     }
-    
+
     // Update DOM
     document.getElementById('totalSales').textContent = formatCurrency(currentTotalSales);
     document.getElementById('totalInvoices').textContent = currentInvoiceCount;
     document.getElementById('avgInvoice').textContent = formatCurrency(currentAvgInvoice);
     document.getElementById('topCustomer').textContent = topCustomer;
     document.getElementById('topCustomerSales').textContent = formatCurrency(topCustomerSales);
-    
+
     // TODO: Implement comparison with previous period
     // For now, we'll just show the current values
     document.getElementById('totalSalesChange').textContent = 'No comparison data';
     document.getElementById('totalInvoicesChange').textContent = 'No comparison data';
     document.getElementById('avgInvoiceChange').textContent = 'No comparison data';
-    
+
     // Populate customer filter dropdown
     const customerFilter = document.getElementById('customerFilter');
     customerFilter.innerHTML = '<option value="all">All Customers</option>';
-    
+
     Object.keys(customerSales).sort().forEach(customer => {
         const option = document.createElement('option');
         option.value = customer;
@@ -398,12 +410,12 @@ function loadSalesTrendChart(granularity, invoices) {
     // Group sales by time period
     const salesData = {};
     const labels = [];
-    
+
     invoices.forEach(invoice => {
         const date = new Date(invoice.date);
         let key;
-        
-        switch(granularity) {
+
+        switch (granularity) {
             case 'day':
                 key = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
                 break;
@@ -416,21 +428,26 @@ function loadSalesTrendChart(granularity, invoices) {
                 key = date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
                 break;
         }
-        
-        salesData[key] = (salesData[key] || 0) + parseFloat(invoice.grandTotal);
+
+        salesData[key] = (salesData[key] || 0) + getInvoiceAmount(invoice);
         if (!labels.includes(key)) {
             labels.push(key);
         }
     });
-    
+
     // Sort labels chronologically
-    labels.sort((a, b) => {
-        return new Date(a) - new Date(b);
-    });
-    
+    if (granularity === 'day' || granularity === 'week') {
+        // For day and week views, we need to sort by actual date
+        labels.sort((a, b) => {
+            const dateA = new Date(a);
+            const dateB = new Date(b);
+            return dateA - dateB;
+        });
+    }
+
     // Prepare chart data
     const data = labels.map(label => salesData[label] || 0);
-    
+
     // Update chart
     const chart = Chart.getChart('salesTrendChart');
     chart.data.labels = labels;
@@ -449,20 +466,21 @@ function loadSalesTrendChart(granularity, invoices) {
 function loadCustomerDistributionChart(invoices) {
     // Group sales by customer
     const customerData = {};
-    
+
     invoices.forEach(invoice => {
-        customerData[invoice.customerName] = (customerData[invoice.customerName] || 0) + parseFloat(invoice.grandTotal);
+        const customerName = invoice.customerName || 'Unknown Customer';
+        customerData[customerName] = (customerData[customerName] || 0) + getInvoiceAmount(invoice);
     });
-    
+
     // Sort customers by sales (descending)
     const sortedCustomers = Object.entries(customerData)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5); // Top 5 customers
-    
+
     const labels = sortedCustomers.map(item => item[0]);
     const data = sortedCustomers.map(item => item[1]);
     const totalSales = data.reduce((sum, val) => sum + val, 0);
-    
+
     // Generate colors
     const backgroundColors = [
         'rgba(255, 99, 132, 0.7)',
@@ -471,7 +489,7 @@ function loadCustomerDistributionChart(invoices) {
         'rgba(75, 192, 192, 0.7)',
         'rgba(153, 102, 255, 0.7)'
     ];
-    
+
     // Update chart
     const chart = Chart.getChart('customerDistributionChart');
     chart.data.labels = labels;
@@ -488,21 +506,21 @@ function loadTaxBreakdownChart(invoices) {
     let cgstTotal = 0;
     let sgstTotal = 0;
     let igstTotal = 0;
-    
+
     invoices.forEach(invoice => {
-        // Handle cases where taxData might not exist
+        // Try multiple possible structures for tax data
         if (invoice.taxData) {
-            cgstTotal += parseFloat(invoice.taxData.cgstAmount) || 0;
-            sgstTotal += parseFloat(invoice.taxData.sgstAmount) || 0;
-            igstTotal += parseFloat(invoice.taxData.igstAmount) || 0;
-        } else if (invoice.cgstAmount) {
+            cgstTotal += parseFloat(invoice.taxData.cgstAmount || 0) || 0;
+            sgstTotal += parseFloat(invoice.taxData.sgstAmount || 0) || 0;
+            igstTotal += parseFloat(invoice.taxData.igstAmount || 0) || 0;
+        } else {
             // Alternative structure
-            cgstTotal += parseFloat(invoice.cgstAmount) || 0;
-            sgstTotal += parseFloat(invoice.sgstAmount) || 0;
-            igstTotal += parseFloat(invoice.igstAmount) || 0;
+            cgstTotal += parseFloat(invoice.cgstAmount || 0) || 0;
+            sgstTotal += parseFloat(invoice.sgstAmount || 0) || 0;
+            igstTotal += parseFloat(invoice.igstAmount || 0) || 0;
         }
     });
-    
+
     // Update chart
     const chart = Chart.getChart('taxBreakdownChart');
     chart.data.labels = ['CGST', 'SGST', 'IGST'];
@@ -521,38 +539,54 @@ function loadTaxBreakdownChart(invoices) {
 // Load product performance chart
 function loadProductPerformanceChart(metric, invoices) {
     const productData = {};
-    
+
     invoices.forEach(invoice => {
-        // Handle both array and object product structures
-        const products = Array.isArray(invoice.products) 
-            ? invoice.products 
-            : invoice.items 
-            ? Object.values(invoice.items) 
-            : [];
-            
+        // Try to handle different property names and structures
+        let products = [];
+
+        // Check for products in various possible properties
+        if (Array.isArray(invoice.products)) {
+            products = invoice.products;
+        } else if (invoice.items && typeof invoice.items === 'object') {
+            products = Object.values(invoice.items);
+        } else if (invoice.productData && Array.isArray(invoice.productData)) {
+            products = invoice.productData;
+        }
+
+        // If we still couldn't find products, log a warning
+        if (products.length === 0) {
+            console.warn('No product data found in invoice:', invoice.invoiceNo);
+            return; // Skip this invoice
+        }
+
         products.forEach(product => {
-            const description = product.description || product.productDescription || 'Unnamed Product';
-            const qty = parseFloat(product.qty) || parseFloat(product.quantity) || 0;
-            const amount = parseFloat(product.amount) || parseFloat(product.rate) * qty || 0;
-            
+            const description = product.description ||
+                product.productDescription ||
+                product.product ||
+                'Unnamed Product';
+
+            const qty = parseFloat(product.qty || product.quantity || 0) || 0;
+            const rate = parseFloat(product.rate || product.unitPrice || 0) || 0;
+            const amount = parseFloat(product.amount || (qty * rate) || 0) || 0;
+
             if (!productData[description]) {
                 productData[description] = { quantity: 0, revenue: 0 };
             }
-            
+
             productData[description].quantity += qty;
             productData[description].revenue += amount;
         });
     });
-    
+
     // Sort products by selected metric
     const sortedProducts = Object.entries(productData)
         .sort((a, b) => b[1][metric] - a[1][metric])
         .slice(0, 5); // Top 5 products
-    
+
     const labels = sortedProducts.map(item => item[0]);
     const data = sortedProducts.map(item => item[1][metric]);
     const label = metric === 'quantity' ? 'Quantity' : 'Revenue';
-    
+
     // Update chart
     const chart = Chart.getChart('productPerformanceChart');
     chart.data.labels = labels;
@@ -561,18 +595,18 @@ function loadProductPerformanceChart(metric, invoices) {
         data: data,
         backgroundColor: 'rgba(75, 192, 192, 0.7)'
     }];
-    
+
     // Update options based on metric
     if (metric === 'revenue') {
-        chart.options.scales.y.ticks.callback = function(value) {
+        chart.options.scales.y.ticks.callback = function (value) {
             return '₹' + value.toLocaleString('en-IN');
         };
     } else {
-        chart.options.scales.y.ticks.callback = function(value) {
+        chart.options.scales.y.ticks.callback = function (value) {
             return value;
         };
     }
-    
+
     chart.update();
 }
 
@@ -580,10 +614,10 @@ function loadProductPerformanceChart(metric, invoices) {
 function updateRecentInvoicesTable(invoices) {
     const tbody = document.querySelector('#recentInvoicesTable tbody');
     tbody.innerHTML = '';
-    
+
     // Sort invoices by date (newest first)
     const sortedInvoices = [...invoices].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-    
+
     if (sortedInvoices.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -592,14 +626,14 @@ function updateRecentInvoicesTable(invoices) {
         `;
         return;
     }
-    
+
     sortedInvoices.forEach(invoice => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${invoice.invoiceNo}</td>
             <td>${new Date(invoice.date).toLocaleDateString('en-IN')}</td>
-            <td>${invoice.customerName}</td>
-            <td>${formatCurrency(parseFloat(invoice.grandTotal))}</td>
+            <td>${invoice.customerName || 'Unknown'}</td>
+            <td>${formatCurrency(getInvoiceAmount(invoice))}</td>
             <td><span class="status paid">Paid</span></td>
             <td>
                 <button class="view-btn" data-invoice="${invoice.invoiceNo}">
@@ -609,10 +643,10 @@ function updateRecentInvoicesTable(invoices) {
         `;
         tbody.appendChild(row);
     });
-    
+
     // Add event listeners to view buttons
     document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const invoiceNo = this.getAttribute('data-invoice');
             window.location.href = `invoice-history.html?invoice=${invoiceNo}`;
         });
@@ -628,23 +662,21 @@ async function initDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        request.onupgradeneeded = function(event) {
+        request.onupgradeneeded = function (event) {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
                 store.createIndex('invoiceNo', 'invoiceNo', { unique: true });
                 store.createIndex('customerName', 'customerName', { unique: false });
                 store.createIndex('date', 'date', { unique: false });
-                store.createIndex('grandTotal', 'grandTotal', { unique: false });
-                store.createIndex('products', 'products', { unique: false });
             }
         };
 
-        request.onsuccess = function(event) {
+        request.onsuccess = function (event) {
             resolve(event.target.result);
         };
 
-        request.onerror = function(event) {
+        request.onerror = function (event) {
             reject('Database error: ' + event.target.errorCode);
         };
     });
@@ -658,11 +690,11 @@ async function getAllInvoices() {
 
         const request = store.getAll();
 
-        request.onsuccess = function() {
+        request.onsuccess = function () {
             resolve(request.result);
         };
 
-        request.onerror = function(event) {
+        request.onerror = function (event) {
             reject('Error getting invoices: ' + event.target.errorCode);
         };
     });

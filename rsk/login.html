@@ -323,11 +323,11 @@
         </div>
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const loginForm = document.getElementById('loginForm');
-            
+
             if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
+                loginForm.addEventListener('submit', function (e) {
                     e.preventDefault();
 
                     const username = document.getElementById('username').value;
@@ -335,12 +335,19 @@
                     const errorMessage = document.getElementById('errorMessage');
 
                     // Check credentials
-                    if (username === 'pragathisai' && password === '1713') {
+                    if (username === 'prgst' && password === '1713') {
                         // Store login state in sessionStorage
                         sessionStorage.setItem('isLoggedIn', 'true');
 
                         // Redirect to index.html
                         window.location.href = 'index.html';
+                    }
+                    else if (username === 'prnogst' && password === '1713') {
+                        // Store login state in sessionStorage
+                        sessionStorage.setItem('isLoggedIn', 'true');
+
+                        // Redirect to external website
+                        window.location.href = 'https://pr2-jade.vercel.app/';
                     } else {
                         errorMessage.textContent = 'Invalid username or password';
                     }

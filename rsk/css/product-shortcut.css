@@ -1,0 +1,621 @@
+/* styles.css */
+
+/* --- GENERAL STYLES AND VARIABLES (Must be consistent across all pages) --- */
+:root {
+    --primary-color: #343a40; /* Blue for primary actions/branding */
+    --secondary-color: #6c757d; /* Gray for secondary elements */
+    --success-color: #28a745; /* Green for success/save */
+    --danger-color: #dc3545; /* Red for delete/danger */
+    --info-color: #17a2b8;
+    --bg-light: #f8f9fa; /* Very light gray background */
+    --bg-white: #ffffff; /* White for content areas */
+    --text-dark: #343a40; /* Dark text */
+    --border-light: #dee2e6; /* Light border color */
+    --shadow-light: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* --- LAYOUT CONTAINER --- */
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- SIDEBAR (Controls) - Reused from previous pages --- */
+.controls {
+    width: 250px;
+    background-color: var(--text-dark);
+    color: var(--bg-white);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+}
+
+.bill-system-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+    text-align: center;
+}
+.brand-name {
+    display: block;
+    color: var(--bg-white);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 5px;
+}
+
+.system-name {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--bg-white);
+    letter-spacing: 1px;
+}
+
+/* Sidebar Links/Buttons */
+.dashboard,
+.view-history-btn,
+#logoutBtn {
+    display: block;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: var(--bg-white);
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.dashboard i,
+.view-history-btn i,
+#logoutBtn i {
+    margin-right: 10px;
+}
+
+.dashboard:hover,
+.view-history-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--bg-white);
+}
+
+.view-history-btn.active {
+    background-color: var(--border-light);
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+#logoutBtn {
+    margin-top: auto;
+    background-color: var(--danger-color);
+    color: var(--bg-white);
+}
+
+#logoutBtn:hover {
+    background-color: #c82333;
+}
+
+/* --- MAIN CONTENT AREA --- */
+.content {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: var(--bg-white);
+}
+
+.content h2 {
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 10px;
+}
+
+/* --- ADD NEW SHORTCUT FORM --- */
+.shortcut-form {
+    background-color: var(--bg-light);
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    margin-bottom: 40px;
+    max-width: 600px; /* Constrain form width */
+}
+
+.shortcut-form h3 {
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--border-light);
+}
+
+#shortcutForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    /* Ensures consistent spacing inside the form */
+    margin-bottom: 0; 
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input[type="text"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+    padding: 10px 20px;
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+    font-weight: 600;
+    margin-top: 10px; /* Spacing below the last input */
+    align-self: flex-start; /* Aligns button to the left */
+}
+
+.btn-primary:hover {
+    background-color: #1e7e34;
+}
+
+/* --- EXISTING SHORTCUTS LIST --- */
+.shortcuts-list h3 {
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+#shortcutsContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 15px;
+}
+
+.shortcut-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-white);
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 5px solid var(--primary-color);
+    box-shadow: var(--shadow-light);
+    transition: box-shadow 0.2s;
+}
+
+.shortcut-card:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.shortcut-info {
+    flex-grow: 1;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+.shortcut-info strong {
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    margin-right: 5px;
+}
+
+.btn-delete {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background-color: var(--danger-color);
+    color: white;
+    margin-left: 15px;
+    transition: background-color 0.2s;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+/* No Shortcuts Message */
+#shortcutsContainer > p {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--secondary-color);
+    margin-top: 20px;
+    font-size: 1rem;
+}/* Product Shortcuts Specific Styles */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-cancel {
+    padding: 10px 20px;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+    font-weight: 600;
+}
+
+.btn-cancel:hover {
+    background-color: #5a6268;
+}
+
+/* Shortcut Cards with Edit Button */
+.shortcut-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-white);
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 5px solid var(--primary-color);
+    box-shadow: var(--shadow-light);
+    transition: box-shadow 0.2s;
+}
+
+.shortcut-card:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.shortcut-info {
+    flex-grow: 1;
+    font-size: 1rem;
+    color: var(--text-dark);
+}
+
+.shortcut-info strong {
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    margin-right: 5px;
+}
+
+.shortcut-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 15px;
+}
+
+.btn-edit {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background-color: var(--info-color);
+    color: white;
+    transition: background-color 0.2s;
+}
+
+.btn-edit:hover {
+    background-color: #138496;
+}
+
+.btn-delete {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background-color: var(--danger-color);
+    color: white;
+    transition: background-color 0.2s;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+/* Confirmation Modals */
+.confirmation-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.confirmation-modal-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 0;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 20px 25px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.success-modal .modal-header {
+    color: #28a745;
+}
+
+.delete-modal .modal-header {
+    color: #dc3545;
+}
+
+.modal-body {
+    padding: 20px 25px;
+}
+
+.modal-message {
+    margin-bottom: 20px;
+    line-height: 1.5;
+    color: #495057;
+}
+
+.shortcut-info {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.info-value {
+    color: #6c757d;
+}
+
+.warning-box {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 15px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.warning-box i {
+    color: #856404;
+    margin-top: 2px;
+}
+
+.warning-text {
+    color: #856404;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.confirmation-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 1rem;
+    margin: 15px 0;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.confirmation-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.confirmation-input.error {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+.modal-footer {
+    padding: 0 25px 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.modal-btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.modal-btn-cancel:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+.modal-btn-confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.success-modal .modal-btn-confirm {
+    background: #28a745;
+    color: white;
+}
+
+.success-modal .modal-btn-confirm:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.delete-modal .modal-btn-confirm {
+    background: #dc3545;
+    color: white;
+}
+
+.delete-modal .modal-btn-confirm:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+.modal-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Success Toast */
+.success-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toastSlideIn 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .controls {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    
+    .content {
+        padding: 15px;
+    }
+    
+    .invoice-container {
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .invoice-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .invoice-title {
+        text-align: left;
+    }
+    
+    .billing-info {
+        flex-direction: column;
+    }
+    
+    .calculation-section {
+        flex-direction: column;
+    }
+}

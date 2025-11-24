@@ -1,0 +1,1008 @@
+/* styles.css */
+
+/* --- GENERAL STYLES AND VARIABLES (Must be consistent across all pages) --- */
+:root {
+    --primary-color: #343a40; /* Blue for primary actions/branding */
+    --secondary-color: #6c757d; /* Gray for secondary elements */
+    --success-color: #28a745; /* Green for success/save */
+    --danger-color: #dc3545; /* Red for delete/danger */
+    --info-color: #17a2b8; /* Cyan for view/share */
+    --bg-light: #f8f9fa; /* Very light gray background */
+    --bg-white: #ffffff; /* White for content areas */
+    --text-dark: #343a40; /* Dark text */
+    --border-light: #dee2e6; /* Light border color */
+    --shadow-light: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* --- LAYOUT CONTAINER --- */
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- SIDEBAR (Controls) - Reused from Customer Details --- */
+.controls {
+    width: 250px;
+    background-color: var(--text-dark);
+    color: var(--bg-white);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+}
+
+.bill-system-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+    text-align: center;
+}
+
+.brand-name {
+    display: block;
+    color: var(--bg-white);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 5px;
+}
+
+.system-name {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--bg-white);
+    letter-spacing: 1px;
+}
+
+/* Sidebar Links/Buttons */
+.dashboard,
+.view-history-btn,
+#logoutBtn {
+    display: block;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: var(--bg-white);
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.dashboard i,
+.view-history-btn i,
+#logoutBtn i {
+    margin-right: 10px;
+}
+
+.dashboard:hover,
+.view-history-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--bg-white);
+}
+
+.view-history-btn.active {
+    background-color: var(--info-color);
+    font-weight: 600;
+    color: var(--bg-white);
+}
+
+#logoutBtn {
+    margin-top: auto; /* Pushes logout to the bottom */
+    background-color: var(--danger-color);
+    color: var(--bg-white);
+}
+
+#logoutBtn:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+/* --- MAIN CONTENT AREA --- */
+.content {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: var(--bg-white);
+}
+
+.content h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-light);
+    padding-bottom: 10px;
+}
+
+/* --- FILTERS (Search & Date Range) --- */
+.filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    align-items: center;
+    flex-wrap: wrap; /* Allows filters to wrap on smaller screens */
+}
+
+.filters input[type="text"],
+.filters input[type="date"] {
+    padding: 10px 15px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 1rem;
+    height: 40px; /* Standardize height */
+}
+
+#searchInput {
+    flex-grow: 2; /* Takes up more space */
+    min-width: 250px;
+}
+
+#dateFrom, #dateTo {
+    flex-grow: 1;
+    min-width: 150px;
+}
+
+#filterBtn, #clearFilters {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+    font-weight: 500;
+    height: 40px;
+}
+
+#filterBtn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+#filterBtn:hover {
+    background-color: #0056b3;
+}
+
+#clearFilters {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+#clearFilters:hover {
+    background-color: #5a6268;
+}
+
+/* --- INVOICE LIST & CARDS --- */
+.invoice-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.invoice-card {
+    background-color: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: var(--shadow-light);
+    transition: transform 0.2s;
+}
+
+.invoice-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+.invoice-header h3 {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.invoice-date {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+.invoice-details p {
+    margin: 5px 0;
+    font-size: 0.95rem;
+}
+
+.invoice-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* Action Buttons */
+.btn-view, .btn-edit, .btn-share, .btn-delete {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+    font-weight: 500;
+}
+
+.btn-view {
+    background-color: var(--info-color);
+    color: white;
+}
+.btn-view:hover { background-color: #117a8b; }
+
+.btn-edit {
+    background-color: var(--primary-color);
+    color: white;
+}
+.btn-edit:hover { background-color: #0056b3; }
+
+.btn-share {
+    background-color: var(--success-color);
+    color: white;
+}
+.btn-share:hover { background-color: #1e7e34; }
+
+.btn-delete {
+    background-color: var(--danger-color);
+    color: white;
+}
+.btn-delete:hover { background-color: #c82333; }
+
+
+/* No Invoices Message */
+.invoice-list > p {
+    grid-column: 1 / -1; /* Make the message span all columns */
+    text-align: center;
+    color: var(--secondary-color);
+    margin-top: 50px;
+    font-size: 1.1rem;
+}
+
+/* --- MODAL STYLES (Reused with some additions) --- */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4); 
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: var(--bg-white);
+    margin: 5% auto; 
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%; 
+    max-width: 500px; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.close {
+    color: var(--secondary-color);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.close:hover,
+.close:focus {
+    color: var(--danger-color);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Form Groups and Inputs inside Modals */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Delete Confirmation Modal Specific Styles */
+#deleteModal .modal-content {
+    max-width: 400px;
+    text-align: center;
+}
+
+#deleteModal h3 {
+    color: var(--danger-color);
+    margin-bottom: 15px;
+}
+
+#deleteModal strong {
+    color: var(--danger-color);
+}
+
+#confirmInvoiceNumber {
+    margin: 15px 0;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-danger, #cancelDelete, #saveEditedInvoice {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+    font-weight: 600;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+#cancelDelete {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+#cancelDelete:hover {
+    background-color: #5a6268;
+}
+
+/* Save Button in Edit Modal */
+#saveEditedInvoice {
+    background-color: var(--primary-color);
+    color: white;
+    width: 100%; /* Make it full width for emphasis */
+    margin-top: 15px;
+}
+
+#saveEditedInvoice:hover {
+    background-color: #0056b3;
+}
+
+/* Invoice View Modal Styles - Simplified & Compact */
+
+/* 1. Modal Container */
+.invoice-view-modal {
+    display: none; /* Keep hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6); /* Slightly darker overlay */
+    overflow-y: auto;
+    padding: 20px 0; /* Add vertical padding for content */
+}
+
+.invoice-modal-content {
+    background-color: white;
+    margin: 30px auto; /* Centered with a smaller top margin */
+    border-radius: 6px; /* Smaller border radius */
+    width: 95%;
+    max-width: 600px; /* Reduced max-width for compact view */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* Lighter shadow */
+    position: relative;
+}
+
+/* 2. Header */
+.invoice-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px; /* Reduced padding */
+    border-bottom: 1px solid #eee; /* Simple border */
+    background-color: #f7f7f7; /* Light background */
+    color: #333;
+    border-radius: 6px 6px 0 0;
+}
+
+.invoice-modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem; /* Smaller font size */
+}
+
+.close-invoice-modal {
+    background: none;
+    border: none;
+    color: #333;
+    font-size: 20px; /* Smaller close icon */
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-invoice-modal:hover {
+    color: #007bff;
+    background-color: transparent; /* Remove background hover */
+}
+
+/* 3. Body */
+.invoice-modal-body {
+    padding: 15px; /* Reduced padding */
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* 4. Sections and Details */
+.invoice-section {
+    margin-bottom: 15px; /* Reduced margin */
+    padding: 10px;
+    border: 1px solid #ddd; /* Simple border */
+    border-radius: 4px;
+    background-color: white; /* Uniform white background */
+}
+
+.invoice-section h3 {
+    color: #007bff;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    font-size: 1rem;
+}
+
+.detail-item, .bank-item {
+    display: flex;
+    justify-content: space-between; /* Place label and value on the same line */
+    padding: 3px 0;
+    border-bottom: 1px dotted #eee;
+}
+
+.detail-item:last-child, .bank-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item label, .bank-item label {
+    font-weight: 500; /* Less bold */
+    color: #555;
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.detail-item span, .bank-item span {
+    color: #333;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+/* 5. Products Table */
+.invoice-products-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.invoice-products-table th {
+    background-color: #007bff;
+    color: white;
+    padding: 8px; /* Reduced padding */
+    text-align: left;
+    font-weight: 500;
+}
+
+.invoice-products-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.invoice-products-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.invoice-products-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* 6. Tax and Total */
+.tax-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.tax-row.grand-total {
+    border-top: 2px solid #007bff;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #007bff;
+    margin-top: 5px;
+    padding-top: 10px;
+}
+
+.amount-words {
+    font-style: italic;
+    color: #777;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-left: 2px solid #007bff;
+    font-size: 0.9rem;
+    margin-top: 15px;
+}
+
+/* 7. Footer */
+.invoice-modal-footer {
+    padding: 10px 15px; /* Reduced padding */
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background-color: #f7f7f7;
+    border-radius: 0 0 6px 6px;
+}
+
+.btn-print, .btn-close {
+    padding: 8px 15px; /* Smaller buttons */
+    border-radius: 4px;
+    font-size: 0.9rem;
+}/* Delete Confirmation Modal Styling */
+#deleteModal .modal-content {
+    background: #fff;
+    border-radius: 8px;
+    border-top: 4px solid #dc3545;
+    box-shadow: 0 10px 30px rgba(220, 53, 69, 0.2);
+    max-width: 450px;
+    margin: 50px auto;
+}
+
+#deleteModal .close {
+    color: #6c757d;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+#deleteModal .close:hover {
+    color: #dc3545;
+}
+
+#deleteModal h3 {
+    color: #dc3545;
+    margin: 0 0 15px 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#deleteModal h3::before {
+    content: "⚠️";
+    font-size: 24px;
+}
+
+#deleteModal p {
+    color: #495057;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+}
+
+#deleteModal strong {
+    color: #dc3545;
+    background: #fff5f5;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #f8d7da;
+}
+
+#deleteModal input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 16px;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+#deleteModal input:focus {
+    outline: none;
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+#deleteModal input.error {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+#confirmDelete {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#confirmDelete:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+#confirmDelete:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#cancelDelete {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#cancelDelete:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+/* Warning Info Box */
+.warning-info {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 15px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.warning-info i {
+    color: #856404;
+    font-size: 16px;
+    margin-top: 2px;
+}
+
+.warning-info p {
+    margin: 0;
+    color: #856404;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Success Message */
+.success-message {
+    background: #d1edff;
+    border: 1px solid #b3d9ff;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 15px 0;
+    text-align: center;
+    color: #0066cc;
+    font-weight: 500;
+}
+/* Share Invoice Modal – Compact & Professional */
+.share-invoice-modal .modal-content {
+    max-width: 650px;
+    margin: 6% auto;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+/* Header */
+.share-modal-header {
+    padding: 15px 20px;
+    background: #f4f6f9;
+    border-bottom: 1px solid #e1e4e8;
+    color: #333;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.share-modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.close-share-modal {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Body */
+.share-modal-body {
+    padding: 20px;
+}
+
+/* Preview Box */
+.share-preview {
+    background: #fafafa;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.preview-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.preview-date {
+    font-size: 0.85rem;
+    padding: 3px 8px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.preview-customer {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.preview-customer p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+/* Share Options */
+.share-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.share-option-card {
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 6px;
+    padding: 12px;
+    transition: 0.2s;
+}
+
+.share-option-card:hover {
+    background: #f7f9fc;
+    border-color: #007bff;
+}
+
+/* Icons */
+.option-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.option-header i {
+    font-size: 1.6rem;
+    color: #4a90e2;
+}
+
+/* Text Info */
+.option-info h5 {
+    margin: 0 0 5px 0;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.option-info p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Features List */
+.option-features {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.option-features li {
+    font-size: 0.8rem;
+    color: #444;
+    margin-bottom: 6px;
+    display: flex;
+    gap: 6px;
+}
+
+.option-features i {
+    font-size: 0.7rem;
+    color: #4a90e2;
+}
+
+/* Buttons */
+.btn-share-option {
+    width: 100%;
+    padding: 8px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: 0.2s;
+}
+
+.btn-share-option:hover {
+    background: #3076c9;
+}
+
+/* Info Box */
+.share-info {
+    margin-top: 15px;
+    padding: 10px;
+    background: #eef6ff;
+    border: 1px solid #cfe2ff;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #1b6fc2;
+}
+
+.share-info i {
+    font-size: 1rem;
+}
+
+/* Toast */
+.success-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4caf50;
+    padding: 12px 16px;
+    color: white;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .share-invoice-modal .modal-content {
+        width: 92%;
+    }
+
+    .share-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .share-modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .btn-share-option {
+        padding: 7px;
+    }
+}
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .controls {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    
+    .content {
+        padding: 15px;
+    }
+    
+    .invoice-container {
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .invoice-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .invoice-title {
+        text-align: left;
+    }
+    
+    .billing-info {
+        flex-direction: column;
+    }
+    
+    .calculation-section {
+        flex-direction: column;
+    }
+}

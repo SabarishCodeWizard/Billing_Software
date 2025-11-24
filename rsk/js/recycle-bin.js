@@ -1,18 +1,25 @@
 // recycle-bin.js - Updated with professional modals
-let currentInvoiceId = null;
+let currentItemId = null;
+let currentItemType = null;
 
 document.addEventListener('DOMContentLoaded', async function () {
-    await invoiceDB.init();
-    loadDeletedInvoices();
+    await db.waitForInit();
+    loadRecycleBin();
 
     // Empty bin button
-    document.getElementById('emptyBin').addEventListener('click', emptyRecycleBin);
+    const emptyBinBtn = document.getElementById('emptyBin');
+    if (emptyBinBtn) {
+        emptyBinBtn.addEventListener('click', emptyRecycleBin);
+    }
 
     // Logout
-    document.getElementById('logoutBtn').addEventListener('click', function () {
-        sessionStorage.removeItem('isLoggedIn');
-        window.location.href = 'login.html';
-    });
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function () {
+            sessionStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        });
+    }
 
     // Restore modal events
     setupRestoreModal();
@@ -21,9 +28,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 function setupRestoreModal() {
     const modal = document.getElementById('restoreModal');
+    if (!modal) return;
+
     const confirmInput = document.getElementById('restoreConfirmInput');
     const confirmBtn = document.getElementById('confirmRestore');
     const cancelBtn = document.getElementById('cancelRestore');
+
+    if (!confirmInput || !confirmBtn || !cancelBtn) return;
 
     // Real-time validation
     confirmInput.addEventListener('input', function() {
@@ -46,9 +57,10 @@ function setupRestoreModal() {
 
     // Confirm restore
     confirmBtn.addEventListener('click', async function() {
-        if (currentInvoiceId) {
-            await performRestore(currentInvoiceId);
+        if (currentItemId && currentItemType) {
+            await performRestore(currentItemId, currentItemType);
             modal.style.display = 'none';
+            resetModalInputs();
         }
     });
 
@@ -69,9 +81,13 @@ function setupRestoreModal() {
 
 function setupDeleteModal() {
     const modal = document.getElementById('deleteModal');
+    if (!modal) return;
+
     const confirmInput = document.getElementById('deleteConfirmInput');
     const confirmBtn = document.getElementById('confirmDelete');
     const cancelBtn = document.getElementById('cancelDelete');
+
+    if (!confirmInput || !confirmBtn || !cancelBtn) return;
 
     // Real-time validation
     confirmInput.addEventListener('input', function() {
@@ -94,9 +110,10 @@ function setupDeleteModal() {
 
     // Confirm delete
     confirmBtn.addEventListener('click', async function() {
-        if (currentInvoiceId) {
-            await performPermanentDelete(currentInvoiceId);
+        if (currentItemId) {
+            await performPermanentDelete(currentItemId);
             modal.style.display = 'none';
+            resetModalInputs();
         }
     });
 
@@ -116,117 +133,222 @@ function setupDeleteModal() {
 }
 
 function resetModalInputs() {
-    document.getElementById('restoreConfirmInput').value = '';
-    document.getElementById('deleteConfirmInput').value = '';
-    document.getElementById('confirmRestore').disabled = true;
-    document.getElementById('confirmDelete').disabled = true;
-    currentInvoiceId = null;
+    const restoreInput = document.getElementById('restoreConfirmInput');
+    const deleteInput = document.getElementById('deleteConfirmInput');
+    const restoreBtn = document.getElementById('confirmRestore');
+    const deleteBtn = document.getElementById('confirmDelete');
+    
+    if (restoreInput) restoreInput.value = '';
+    if (deleteInput) deleteInput.value = '';
+    if (restoreBtn) restoreBtn.disabled = true;
+    if (deleteBtn) deleteBtn.disabled = true;
+    currentItemId = null;
+    currentItemType = null;
 }
 
-async function loadDeletedInvoices() {
-    const deletedInvoices = await invoiceDB.getAll(STORES.DELETED_INVOICES);
-    displayDeletedInvoices(deletedInvoices);
+async function loadRecycleBin() {
+    try {
+        const items = await db.getRecycleBinItems();
+        displayRecycleBinItems(items);
+    } catch (error) {
+        console.error('Error loading recycle bin:', error);
+        showSuccessToast('Error loading recycle bin. Please try again.', 'error');
+    }
 }
 
-function displayDeletedInvoices(invoices) {
+function displayRecycleBinItems(items) {
     const container = document.getElementById('deletedInvoices');
+    if (!container) return;
 
-    if (invoices.length === 0) {
+    if (items.length === 0) {
         container.innerHTML = '<p>Recycle bin is empty.</p>';
         return;
     }
 
-    container.innerHTML = invoices.map(invoice => `
-        <div class="deleted-invoice-card">
-            <div class="invoice-header">
-                <h3>Invoice #${invoice.invoiceNumber}</h3>
-                <span class="invoice-date">${Utils.formatDate(invoice.date)}</span>
+    container.innerHTML = items.map(item => {
+        let title, details, amount;
+        
+        switch (item.type) {
+            case 'invoice':
+                title = `Invoice #${item.invoiceNumber}`;
+                details = `<p><strong>Customer:</strong> ${item.customerName}</p>
+                          <p><strong>Phone:</strong> ${item.customerPhone}</p>`;
+                amount = `₹${Utils.formatCurrency(item.grandTotal)}`;
+                break;
+            case 'customer':
+                title = `Customer: ${item.name}`;
+                details = `<p><strong>Phone:</strong> ${item.phone}</p>
+                          <p><strong>Address:</strong> ${item.address || 'Not provided'}</p>`;
+                amount = 'Customer';
+                break;
+            case 'product':
+                title = `Product: ${item.shortcut}`;
+                details = `<p><strong>Description:</strong> ${item.description}</p>`;
+                amount = 'Product Shortcut';
+                break;
+            default:
+                title = 'Unknown Item';
+                details = '';
+                amount = '';
+        }
+
+        return `
+            <div class="deleted-invoice-card">
+                <div class="invoice-header">
+                    <h3>${title}</h3>
+                    <span class="item-type">${item.type}</span>
+                </div>
+                <div class="invoice-details">
+                    ${details}
+                    <p><strong>Amount:</strong> ${amount}</p>
+                    <p><strong>Deleted on:</strong> ${Utils.formatDate(item.deletedAt?.toDate?.() || item.deletedAt || item.createdAt)}</p>
+                </div>
+                <div class="invoice-actions">
+                    <button class="btn-restore" onclick="showRestoreModal('${item.id}', '${item.type}')">
+                        <i class="fas fa-trash-restore"></i> Restore
+                    </button>
+                    <button class="btn-delete" onclick="showDeleteModal('${item.id}', '${item.type}')">
+                        <i class="fas fa-fire-alt"></i> Delete Permanently
+                    </button>
+                </div>
             </div>
-            <div class="invoice-details">
-                <p><strong>Customer:</strong> ${invoice.customerName}</p>
-                <p><strong>Phone:</strong> ${invoice.customerPhone}</p>
-                <p><strong>Amount:</strong> ₹${Utils.formatCurrency(invoice.grandTotal)}</p>
-                <p><strong>Deleted on:</strong> ${Utils.formatDate(invoice.deletedAt || invoice.createdAt)}</p>
-            </div>
-            <div class="invoice-actions">
-                <button class="btn-restore" onclick="showRestoreModal(${invoice.id})">
-                    <i class="fas fa-trash-restore"></i> Restore
-                </button>
-                <button class="btn-delete" onclick="showDeleteModal(${invoice.id})">
-                    <i class="fas fa-fire-alt"></i> Delete Permanently
-                </button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-async function showRestoreModal(id) {
-    const invoice = await invoiceDB.get(STORES.DELETED_INVOICES, id);
-    if (!invoice) return;
-
-    currentInvoiceId = id;
-    
-    // Populate modal with invoice data
-    document.getElementById('restoreInvoiceNumber').textContent = invoice.invoiceNumber;
-    document.getElementById('restoreCustomerName').textContent = invoice.customerName;
-    document.getElementById('restoreInvoiceAmount').textContent = `₹${Utils.formatCurrency(invoice.grandTotal)}`;
-    
-    // Show modal
-    document.getElementById('restoreModal').style.display = 'block';
-    
-    // Focus on input field
-    setTimeout(() => {
-        document.getElementById('restoreConfirmInput').focus();
-    }, 100);
-}
-
-async function showDeleteModal(id) {
-    const invoice = await invoiceDB.get(STORES.DELETED_INVOICES, id);
-    if (!invoice) return;
-
-    currentInvoiceId = id;
-    
-    // Populate modal with invoice data
-    document.getElementById('deleteInvoiceNumber').textContent = invoice.invoiceNumber;
-    document.getElementById('deleteCustomerName').textContent = invoice.customerName;
-    document.getElementById('deleteInvoiceAmount').textContent = `₹${Utils.formatCurrency(invoice.grandTotal)}`;
-    document.getElementById('deleteInvoiceDate').textContent = Utils.formatDate(invoice.deletedAt || invoice.createdAt);
-    
-    // Show modal
-    document.getElementById('deleteModal').style.display = 'block';
-    
-    // Focus on input field
-    setTimeout(() => {
-        document.getElementById('deleteConfirmInput').focus();
-    }, 100);
-}
-
-async function performRestore(id) {
+async function showRestoreModal(id, type) {
     try {
-        const invoice = await invoiceDB.get(STORES.DELETED_INVOICES, id);
-        if (!invoice) return;
+        const items = await db.getRecycleBinItems();
+        const item = items.find(i => i.id === id);
+        
+        if (!item) {
+            showSuccessToast('Item not found in recycle bin.', 'error');
+            return;
+        }
 
-        // Restore to main invoices store
-        await invoiceDB.saveInvoice(invoice);
-        // Remove from deleted store
-        await invoiceDB.delete(STORES.DELETED_INVOICES, id);
+        currentItemId = id;
+        currentItemType = type;
+        
+        // Populate modal with item data
+        let title, details;
+        
+        switch (type) {
+            case 'invoice':
+                title = `Invoice #${item.invoiceNumber}`;
+                details = `<p><strong>Customer:</strong> ${item.customerName}</p>
+                          <p><strong>Amount:</strong> ₹${Utils.formatCurrency(item.grandTotal)}</p>`;
+                break;
+            case 'customer':
+                title = `Customer: ${item.name}`;
+                details = `<p><strong>Phone:</strong> ${item.phone}</p>`;
+                break;
+            case 'product':
+                title = `Product: ${item.shortcut}`;
+                details = `<p><strong>Description:</strong> ${item.description}</p>`;
+                break;
+        }
 
-        loadDeletedInvoices();
-        showSuccessToast('Invoice restored successfully!', 'success');
+        const restoreInvoiceNumber = document.getElementById('restoreInvoiceNumber');
+        const restoreCustomerName = document.getElementById('restoreCustomerName');
+        const modal = document.getElementById('restoreModal');
+        
+        if (!restoreInvoiceNumber || !restoreCustomerName || !modal) return;
+        
+        restoreInvoiceNumber.textContent = title;
+        restoreCustomerName.innerHTML = details;
+        
+        // Show modal
+        modal.style.display = 'block';
+        
+        // Focus on input field
+        setTimeout(() => {
+            const confirmInput = document.getElementById('restoreConfirmInput');
+            if (confirmInput) confirmInput.focus();
+        }, 100);
     } catch (error) {
-        console.error('Error restoring invoice:', error);
-        showSuccessToast('Error restoring invoice. Please try again.', 'error');
+        console.error('Error showing restore modal:', error);
+        showSuccessToast('Error loading item details.', 'error');
+    }
+}
+
+async function showDeleteModal(id, type) {
+    try {
+        const items = await db.getRecycleBinItems();
+        const item = items.find(i => i.id === id);
+        
+        if (!item) {
+            showSuccessToast('Item not found in recycle bin.', 'error');
+            return;
+        }
+
+        currentItemId = id;
+        currentItemType = type;
+        
+        // Populate modal with item data
+        let title, details;
+        
+        switch (type) {
+            case 'invoice':
+                title = `Invoice #${item.invoiceNumber}`;
+                details = `<p><strong>Customer:</strong> ${item.customerName}</p>
+                          <p><strong>Amount:</strong> ₹${Utils.formatCurrency(item.grandTotal)}</p>`;
+                break;
+            case 'customer':
+                title = `Customer: ${item.name}`;
+                details = `<p><strong>Phone:</strong> ${item.phone}</p>`;
+                break;
+            case 'product':
+                title = `Product: ${item.shortcut}`;
+                details = `<p><strong>Description:</strong> ${item.description}</p>`;
+                break;
+        }
+
+        const deleteInvoiceNumber = document.getElementById('deleteInvoiceNumber');
+        const deleteCustomerName = document.getElementById('deleteCustomerName');
+        const deleteInvoiceDate = document.getElementById('deleteInvoiceDate');
+        const modal = document.getElementById('deleteModal');
+        
+        if (!deleteInvoiceNumber || !deleteCustomerName || !deleteInvoiceDate || !modal) return;
+        
+        deleteInvoiceNumber.textContent = title;
+        deleteCustomerName.innerHTML = details;
+        deleteInvoiceDate.textContent = Utils.formatDate(item.deletedAt?.toDate?.() || item.deletedAt || item.createdAt);
+        
+        // Show modal
+        modal.style.display = 'block';
+        
+        // Focus on input field
+        setTimeout(() => {
+            const confirmInput = document.getElementById('deleteConfirmInput');
+            if (confirmInput) confirmInput.focus();
+        }, 100);
+    } catch (error) {
+        console.error('Error showing delete modal:', error);
+        showSuccessToast('Error loading item details.', 'error');
+    }
+}
+
+async function performRestore(id, type) {
+    try {
+        console.log('Attempting to restore item:', { id, type });
+        await db.restoreFromRecycleBin(id, type);
+        loadRecycleBin();
+        showSuccessToast('Item restored successfully!', 'success');
+    } catch (error) {
+        console.error('Error restoring item:', error);
+        showSuccessToast('Error restoring item: ' + error.message, 'error');
     }
 }
 
 async function performPermanentDelete(id) {
     try {
-        await invoiceDB.delete(STORES.DELETED_INVOICES, id);
-        loadDeletedInvoices();
-        showSuccessToast('Invoice permanently deleted.', 'warning');
+        console.log('Attempting to delete item:', id);
+        await db.permanentDeleteFromRecycleBin(id);
+        loadRecycleBin();
+        showSuccessToast('Item permanently deleted.', 'warning');
     } catch (error) {
-        console.error('Error deleting invoice:', error);
-        showSuccessToast('Error deleting invoice. Please try again.', 'error');
+        console.error('Error deleting item:', error);
+        showSuccessToast('Error deleting item: ' + error.message, 'error');
     }
 }
 
@@ -259,14 +381,26 @@ function showSuccessToast(message, type = 'success') {
     }, 3000);
 }
 
-// Keep the existing emptyRecycleBin function
 async function emptyRecycleBin() {
-    if (confirm('Are you sure you want to empty the recycle bin? All deleted invoices will be permanently lost.')) {
-        const deletedInvoices = await invoiceDB.getAll(STORES.DELETED_INVOICES);
-        for (const invoice of deletedInvoices) {
-            await invoiceDB.delete(STORES.DELETED_INVOICES, invoice.id);
+    if (confirm('Are you sure you want to empty the recycle bin? All deleted items will be permanently lost.')) {
+        try {
+            const items = await db.getRecycleBinItems();
+            
+            if (items.length === 0) {
+                showSuccessToast('Recycle bin is already empty.', 'warning');
+                return;
+            }
+            
+            // Delete all items permanently
+            for (const item of items) {
+                await db.permanentDeleteFromRecycleBin(item.id);
+            }
+            
+            loadRecycleBin();
+            showSuccessToast('Recycle bin emptied successfully!', 'warning');
+        } catch (error) {
+            console.error('Error emptying recycle bin:', error);
+            showSuccessToast('Error emptying recycle bin: ' + error.message, 'error');
         }
-        loadDeletedInvoices();
-        showSuccessToast('Recycle bin emptied successfully!', 'warning');
     }
 }

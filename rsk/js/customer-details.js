@@ -2,22 +2,31 @@
 let currentCustomerPhone = null;
 
 document.addEventListener('DOMContentLoaded', async function () {
-    await invoiceDB.init();
+    await db.waitForInit();
     loadCustomers();
     setupEventListeners();
 });
 
 function setupEventListeners() {
     // Search functionality
-    document.getElementById('searchCustomer').addEventListener('input', loadCustomers);
+    const searchCustomer = document.getElementById('searchCustomer');
+    if (searchCustomer) {
+        searchCustomer.addEventListener('input', loadCustomers);
+    }
 
     // Add customer button
-    document.getElementById('addCustomerBtn').addEventListener('click', function () {
-        openCustomerModal();
-    });
+    const addCustomerBtn = document.getElementById('addCustomerBtn');
+    if (addCustomerBtn) {
+        addCustomerBtn.addEventListener('click', function () {
+            openCustomerModal();
+        });
+    }
 
     // Customer form submission
-    document.getElementById('customerForm').addEventListener('submit', saveCustomer);
+    const customerForm = document.getElementById('customerForm');
+    if (customerForm) {
+        customerForm.addEventListener('submit', saveCustomer);
+    }
 
     // Modal close buttons
     document.querySelectorAll('.close').forEach(closeBtn => {
@@ -26,30 +35,49 @@ function setupEventListeners() {
         });
     });
 
-    document.getElementById('cancelCustomer').addEventListener('click', function () {
-        document.getElementById('customerModal').style.display = 'none';
-    });
+    const cancelCustomer = document.getElementById('cancelCustomer');
+    if (cancelCustomer) {
+        cancelCustomer.addEventListener('click', function () {
+            const customerModal = document.getElementById('customerModal');
+            if (customerModal) {
+                customerModal.style.display = 'none';
+            }
+        });
+    }
 
     // Success modal
-    document.getElementById('successModalOk').addEventListener('click', function() {
-        document.getElementById('successModal').style.display = 'none';
-    });
+    const successModalOk = document.getElementById('successModalOk');
+    if (successModalOk) {
+        successModalOk.addEventListener('click', function() {
+            const successModal = document.getElementById('successModal');
+            if (successModal) {
+                successModal.style.display = 'none';
+            }
+        });
+    }
 
     // Delete modal events
     setupDeleteModal();
 
     // Logout
-    document.getElementById('logoutBtn').addEventListener('click', function () {
-        sessionStorage.removeItem('isLoggedIn');
-        window.location.href = 'login.html';
-    });
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function () {
+            sessionStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        });
+    }
 }
 
 function setupDeleteModal() {
     const modal = document.getElementById('deleteModal');
+    if (!modal) return;
+
     const confirmInput = document.getElementById('deleteConfirmInput');
     const confirmBtn = document.getElementById('confirmDelete');
     const cancelBtn = document.getElementById('cancelDelete');
+
+    if (!confirmInput || !confirmBtn || !cancelBtn) return;
 
     // Real-time validation
     confirmInput.addEventListener('input', function() {
@@ -95,27 +123,37 @@ function setupDeleteModal() {
 }
 
 function resetDeleteModal() {
-    document.getElementById('deleteConfirmInput').value = '';
-    document.getElementById('confirmDelete').disabled = true;
+    const confirmInput = document.getElementById('deleteConfirmInput');
+    const confirmBtn = document.getElementById('confirmDelete');
+    
+    if (confirmInput) confirmInput.value = '';
+    if (confirmBtn) confirmBtn.disabled = true;
     currentCustomerPhone = null;
 }
 
 async function loadCustomers() {
-    const customers = await invoiceDB.getAllCustomers();
-    const searchTerm = document.getElementById('searchCustomer').value.toLowerCase();
+    try {
+        const customers = await db.getCustomers();
+        const searchCustomer = document.getElementById('searchCustomer');
+        const searchTerm = searchCustomer ? searchCustomer.value.toLowerCase() : '';
 
-    const filteredCustomers = customers.filter(customer =>
-        !searchTerm ||
-        customer.name.toLowerCase().includes(searchTerm) ||
-        customer.phone.includes(searchTerm) ||
-        (customer.gstin && customer.gstin.toLowerCase().includes(searchTerm))
-    );
+        const filteredCustomers = customers.filter(customer =>
+            !searchTerm ||
+            customer.name.toLowerCase().includes(searchTerm) ||
+            customer.phone.includes(searchTerm) ||
+            (customer.gstin && customer.gstin.toLowerCase().includes(searchTerm))
+        );
 
-    displayCustomers(filteredCustomers);
+        displayCustomers(filteredCustomers);
+    } catch (error) {
+        console.error('Error loading customers:', error);
+        showSuccessModal('Error', 'Error loading customers. Please try again.', 'error');
+    }
 }
 
 function displayCustomers(customers) {
     const customerList = document.getElementById('customerList');
+    if (!customerList) return;
 
     if (customers.length === 0) {
         customerList.innerHTML = '<p>No customers found.</p>';
@@ -149,19 +187,27 @@ function openCustomerModal(customer = null) {
     const title = document.getElementById('customerModalTitle');
     const form = document.getElementById('customerForm');
 
+    if (!modal || !title || !form) return;
+
     if (customer) {
         title.textContent = 'Edit Customer';
-        document.getElementById('modalCustomerPhone').value = customer.phone;
-        document.getElementById('modalCustomerName').value = customer.name;
-        document.getElementById('modalCustomerAddress').value = customer.address || '';
-        document.getElementById('modalCustomerGSTIN').value = customer.gstin || '';
+        const phoneField = document.getElementById('modalCustomerPhone');
+        const nameField = document.getElementById('modalCustomerName');
+        const addressField = document.getElementById('modalCustomerAddress');
+        const gstinField = document.getElementById('modalCustomerGSTIN');
+        
+        if (phoneField) phoneField.value = customer.phone;
+        if (nameField) nameField.value = customer.name;
+        if (addressField) addressField.value = customer.address || '';
+        if (gstinField) gstinField.value = customer.gstin || '';
 
         // Make phone field read-only when editing
-        document.getElementById('modalCustomerPhone').readOnly = true;
+        if (phoneField) phoneField.readOnly = true;
     } else {
         title.textContent = 'Add New Customer';
         form.reset();
-        document.getElementById('modalCustomerPhone').readOnly = false;
+        const phoneField = document.getElementById('modalCustomerPhone');
+        if (phoneField) phoneField.readOnly = false;
     }
 
     modal.style.display = 'block';
@@ -170,11 +216,18 @@ function openCustomerModal(customer = null) {
 async function saveCustomer(e) {
     e.preventDefault();
 
+    const phoneField = document.getElementById('modalCustomerPhone');
+    const nameField = document.getElementById('modalCustomerName');
+    const addressField = document.getElementById('modalCustomerAddress');
+    const gstinField = document.getElementById('modalCustomerGSTIN');
+
+    if (!phoneField || !nameField) return;
+
     const customer = {
-        phone: document.getElementById('modalCustomerPhone').value.trim(),
-        name: document.getElementById('modalCustomerName').value.trim(),
-        address: document.getElementById('modalCustomerAddress').value.trim(),
-        gstin: document.getElementById('modalCustomerGSTIN').value.trim()
+        phone: phoneField.value.trim(),
+        name: nameField.value.trim(),
+        address: addressField ? addressField.value.trim() : '',
+        gstin: gstinField ? gstinField.value.trim() : ''
     };
 
     if (!Utils.isValidPhone(customer.phone)) {
@@ -188,10 +241,29 @@ async function saveCustomer(e) {
     }
 
     try {
-        await invoiceDB.saveCustomer(customer);
-        document.getElementById('customerModal').style.display = 'none';
+        // Check if we're editing an existing customer
+        const existingCustomer = await db.getCustomerByPhone(customer.phone);
+        const isEditing = phoneField ? phoneField.readOnly : false;
+        
+        if (existingCustomer && isEditing) {
+            // Update existing customer
+            await db.updateCustomer(existingCustomer.id, customer);
+            showSuccessModal('Success', 'Customer updated successfully!', 'success');
+        } else if (existingCustomer && !isEditing) {
+            // Trying to add customer with existing phone number
+            showSuccessModal('Error', 'Customer with this phone number already exists.', 'error');
+            return;
+        } else {
+            // Add new customer
+            await db.addCustomer(customer);
+            showSuccessModal('Success', 'Customer saved successfully!', 'success');
+        }
+        
+        const customerModal = document.getElementById('customerModal');
+        if (customerModal) {
+            customerModal.style.display = 'none';
+        }
         loadCustomers();
-        showSuccessModal('Success', 'Customer saved successfully!', 'success');
     } catch (error) {
         console.error('Error saving customer:', error);
         showSuccessModal('Error', 'Error saving customer. Please try again.', 'error');
@@ -199,32 +271,58 @@ async function saveCustomer(e) {
 }
 
 async function editCustomer(phone) {
-    const customer = await invoiceDB.getCustomer(phone);
-    openCustomerModal(customer);
+    try {
+        const customer = await db.getCustomerByPhone(phone);
+        if (customer) {
+            openCustomerModal(customer);
+        } else {
+            showSuccessModal('Error', 'Customer not found.', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading customer:', error);
+        showSuccessModal('Error', 'Error loading customer data.', 'error');
+    }
 }
 
 function showDeleteModal(phone, name, gstin) {
     currentCustomerPhone = phone;
     
+    const deleteCustomerName = document.getElementById('deleteCustomerName');
+    const deleteCustomerPhone = document.getElementById('deleteCustomerPhone');
+    const deleteCustomerGSTIN = document.getElementById('deleteCustomerGSTIN');
+    const modal = document.getElementById('deleteModal');
+    
+    if (!deleteCustomerName || !deleteCustomerPhone || !deleteCustomerGSTIN || !modal) return;
+    
     // Populate modal with customer data
-    document.getElementById('deleteCustomerName').textContent = name;
-    document.getElementById('deleteCustomerPhone').textContent = phone;
-    document.getElementById('deleteCustomerGSTIN').textContent = gstin || 'Not provided';
+    deleteCustomerName.textContent = name;
+    deleteCustomerPhone.textContent = phone;
+    deleteCustomerGSTIN.textContent = gstin || 'Not provided';
     
     // Show modal
-    document.getElementById('deleteModal').style.display = 'block';
+    modal.style.display = 'block';
     
     // Focus on input field
     setTimeout(() => {
-        document.getElementById('deleteConfirmInput').focus();
+        const confirmInput = document.getElementById('deleteConfirmInput');
+        if (confirmInput) confirmInput.focus();
     }, 100);
 }
 
 async function performDeleteCustomer(phone) {
     try {
-        await invoiceDB.delete(STORES.CUSTOMERS, phone);
+        // Get customer data first to save to recycle bin
+        const customer = await db.getCustomerByPhone(phone);
+        if (customer) {
+            // Add to recycle bin
+            await db.addToRecycleBin(customer, 'customer');
+            
+            // Delete from main collection
+            await db.deleteCustomer(customer.id);
+        }
+        
         loadCustomers();
-        showSuccessToast('Customer deleted successfully!', 'warning');
+        showSuccessToast('Customer moved to recycle bin successfully!', 'warning');
     } catch (error) {
         console.error('Error deleting customer:', error);
         showSuccessToast('Error deleting customer. Please try again.', 'error');
@@ -232,17 +330,22 @@ async function performDeleteCustomer(phone) {
 }
 
 function showSuccessModal(title, message, type = 'success') {
-    document.getElementById('successModalTitle').textContent = title;
-    document.getElementById('successModalMessage').textContent = message;
-    
+    const successModalTitle = document.getElementById('successModalTitle');
+    const successModalMessage = document.getElementById('successModalMessage');
     const modal = document.getElementById('successModal');
+    
+    if (!successModalTitle || !successModalMessage || !modal) return;
+    
+    successModalTitle.textContent = title;
+    successModalMessage.textContent = message;
+    
     const headerIcon = modal.querySelector('.modal-header i');
     
     if (type === 'error') {
-        headerIcon.className = 'fas fa-exclamation-circle fa-lg';
+        if (headerIcon) headerIcon.className = 'fas fa-exclamation-circle fa-lg';
         modal.className = 'confirmation-modal error-modal';
     } else {
-        headerIcon.className = 'fas fa-check-circle fa-lg';
+        if (headerIcon) headerIcon.className = 'fas fa-check-circle fa-lg';
         modal.className = 'confirmation-modal success-modal';
     }
     

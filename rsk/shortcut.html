@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Shortcuts - RSK ENTERPRISES</title>
+    <title>Product Shortcuts - PR FABRICS</title>
     <link rel="stylesheet" href="css/product-shortcut.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
         if (sessionStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'login.html';
@@ -33,9 +35,7 @@
             <a href="recycle-bin.html" class="view-history-btn">
                 <i class="fas fa-trash-restore"></i> Recycle Bin
             </a>
-            <button id="logoutBtn">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
+            
         </div>
 
         <div class="content">

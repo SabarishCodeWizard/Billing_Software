@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login / Signup</title>
-
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -236,7 +237,7 @@
                 const password = document.getElementById("password").value;
                 const errorMessage = document.getElementById("errorMessage");
 
-                if (username === "rayappan" && password === "rsk") {
+                if (username === "prgst" && password === "1713") {
                     sessionStorage.setItem("isLoggedIn", "true");
                     window.location.href = "index.html";
                 } else {

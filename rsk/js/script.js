@@ -1,12 +1,7 @@
-// Add these variables at the top of your script.js
-let currentFinancialYear = null;
-let invoiceSuggestions = null;
-
-
 // script.js - Main application logic for index.html
 document.addEventListener('DOMContentLoaded', async function () {
-    // Initialize database
-    await invoiceDB.init();
+    // Initialize database - wait for Firebase to be ready
+    await db.waitForInit();
 
     // Initialize invoice suggestions
     await initializeInvoiceSuggestions();
@@ -24,9 +19,18 @@ document.addEventListener('DOMContentLoaded', async function () {
         await loadInvoiceForEdit(editInvoiceId);
     } else {
         // Set default tax rates for new invoice
-        document.getElementById('cgstRate').value = 9;
-        document.getElementById('sgstRate').value = 9;
+        document.getElementById('cgstRate').value = 2.5;
+        document.getElementById('sgstRate').value = 2.5;
         document.getElementById('igstRate').value = 0;
+        
+        // Set default invoice number
+        try {
+            const nextInvoiceNumber = await db.getNextInvoiceNumber();
+            document.getElementById('invoiceNo').value = nextInvoiceNumber;
+        } catch (error) {
+            console.error('Error getting next invoice number:', error);
+            document.getElementById('invoiceNo').value = '001/' + new Date().getFullYear().toString().slice(-2);
+        }
     }
 
     // Auto-fill customer details on phone number input
@@ -34,12 +38,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         const phone = this.value.trim();
 
         if (Utils.isValidPhone(phone)) {
-            const customer = await invoiceDB.getCustomer(phone);
+            try {
+                const customer = await db.getCustomerByPhone(phone);
 
-            if (customer) {
-                document.getElementById('customerName').value = customer.name || '';
-                document.getElementById('customerAddress').value = customer.address || '';
-                document.getElementById('customerGSTIN').value = customer.gstin || '';
+                if (customer) {
+                    document.getElementById('customerName').value = customer.name || '';
+                    document.getElementById('customerAddress').value = customer.address || '';
+                    document.getElementById('customerGSTIN').value = customer.gstin || '';
+                }
+            } catch (error) {
+                console.error('Error fetching customer:', error);
             }
         }
     });
@@ -56,12 +64,17 @@ document.addEventListener('DOMContentLoaded', async function () {
         const gstin = document.getElementById('customerGSTIN').value.trim();
 
         if (Utils.isValidPhone(phone) && name) {
-            await invoiceDB.saveCustomer({
-                phone,
-                name,
-                address,
-                gstin
-            });
+            try {
+                await db.addCustomer({
+                    phone: phone,
+                    name: name,
+                    address: address,
+                    gstin: gstin
+                });
+                console.log('Customer saved successfully');
+            } catch (error) {
+                console.error('Error saving customer:', error);
+            }
         }
     }
 
@@ -71,13 +84,17 @@ document.addEventListener('DOMContentLoaded', async function () {
             const input = e.target.value.trim();
 
             if (input.length >= 2) {
-                const shortcuts = await invoiceDB.getAllShortcuts();
-                const matchedShortcut = shortcuts.find(s => s.shortcut === input);
+                try {
+                    const shortcuts = await db.getProducts();
+                    const matchedShortcut = shortcuts.find(s => s.shortcut === input);
 
-                if (matchedShortcut) {
-                    e.target.value = matchedShortcut.description;
-                    // Focus on next field
-                    e.target.closest('tr').querySelector('.hsn-code').focus();
+                    if (matchedShortcut) {
+                        e.target.value = matchedShortcut.description;
+                        // Focus on next field
+                        e.target.closest('tr').querySelector('.hsn-code').focus();
+                    }
+                } catch (error) {
+                    console.error('Error fetching products:', error);
                 }
             }
         }
@@ -134,15 +151,45 @@ document.addEventListener('DOMContentLoaded', async function () {
         window.location.href = 'login.html';
     });
 
+    // Add event listeners for the new buttons
+    document.getElementById('applySuggestion').addEventListener('click', function () {
+        applyInvoiceSuggestion();
+    });
+
+    document.getElementById('refreshSuggestions').addEventListener('click', async function () {
+        await loadInvoiceSuggestions();
+
+        // Show refresh confirmation
+        const refreshBtn = this;
+        const originalHtml = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<i class="fas fa-check"></i> Refreshed!';
+        refreshBtn.style.background = '#27ae60';
+
+        setTimeout(() => {
+            refreshBtn.innerHTML = originalHtml;
+            refreshBtn.style.background = '';
+        }, 2000);
+    });
+
+    // Auto-refresh suggestions when invoice date changes
+    document.getElementById('invoiceDate').addEventListener('change', async function () {
+        const selectedDate = this.value;
+        const financialYear = Utils.getCurrentFinancialYear();
+
+        // Check if the selected date is in current financial year
+        if (!Utils.isDateInFinancialYear(selectedDate, financialYear)) {
+            alert(`Note: Selected date is not in current financial year (${financialYear.display}). Invoice numbers are recycled within the financial year.`);
+        }
+
+        await loadInvoiceSuggestions();
+    });
+
     // Initialize with one row if no existing invoice
     if (!editInvoiceId) {
         addProductRow();
     }
 });
 
-
-
-// Add these new functions
 async function initializeInvoiceSuggestions() {
     currentFinancialYear = Utils.getCurrentFinancialYear();
     await loadInvoiceSuggestions();
@@ -151,31 +198,33 @@ async function initializeInvoiceSuggestions() {
     document.getElementById('currentFinancialYear').textContent = currentFinancialYear.display;
 }
 
-
 async function loadInvoiceSuggestions() {
-    const invoices = await invoiceDB.getAllInvoices();
-    const currentYearInvoices = invoices.filter(invoice =>
-        Utils.isDateInFinancialYear(invoice.date, currentFinancialYear)
-    );
+    try {
+        const invoices = await db.getInvoices();
+        const currentYearInvoices = invoices.filter(invoice =>
+            Utils.isDateInFinancialYear(invoice.date, currentFinancialYear)
+        );
 
-    // Get the highest invoice number for current financial year
-    let lastInvoiceNumber = 0;
+        // Get the highest invoice number for current financial year
+        let lastInvoiceNumber = 0;
 
-    currentYearInvoices.forEach(invoice => {
-        const invoiceNum = Utils.parseInvoiceNumber(invoice.invoiceNumber);
-        if (invoiceNum > lastInvoiceNumber) {
-            lastInvoiceNumber = invoiceNum;
-        }
-    });
+        currentYearInvoices.forEach(invoice => {
+            const invoiceNum = Utils.parseInvoiceNumber(invoice.invoiceNumber);
+            if (invoiceNum > lastInvoiceNumber) {
+                lastInvoiceNumber = invoiceNum;
+            }
+        });
 
-    invoiceSuggestions = {
-        lastInvoice: lastInvoiceNumber,
-        nextInvoice: lastInvoiceNumber + 1
-    };
+        invoiceSuggestions = {
+            lastInvoice: lastInvoiceNumber,
+            nextInvoice: lastInvoiceNumber + 1
+        };
 
-    updateSuggestionDisplay();
+        updateSuggestionDisplay();
+    } catch (error) {
+        console.error('Error loading invoice suggestions:', error);
+    }
 }
-
 
 function updateSuggestionDisplay() {
     if (invoiceSuggestions) {
@@ -189,8 +238,6 @@ function updateSuggestionDisplay() {
         document.getElementById('nextInvoiceNumber').textContent = nextDisplay;
     }
 }
-
-
 
 function applyInvoiceSuggestion() {
     if (invoiceSuggestions) {
@@ -212,51 +259,59 @@ function applyInvoiceSuggestion() {
 
 async function loadInvoiceForEdit(invoiceId) {
     try {
-        const invoice = await invoiceDB.getInvoice(parseInt(invoiceId));
+        let invoice = await db.getInvoiceByNumber(invoiceId);
 
-        if (invoice) {
-            // Fill basic invoice details
-            document.getElementById('invoiceNo').value = invoice.invoiceNumber;
-            document.getElementById('invoiceDate').value = invoice.date;
-            document.getElementById('customerPhone').value = invoice.customerPhone;
-            document.getElementById('customerName').value = invoice.customerName;
-            document.getElementById('customerAddress').value = invoice.customerAddress;
-            document.getElementById('customerGSTIN').value = invoice.customerGSTIN;
-            document.getElementById('state').value = invoice.state;
-            document.getElementById('stateCode').value = invoice.stateCode;
-            document.getElementById('transportMode').value = invoice.transportMode;
-            document.getElementById('vehicleNumber').value = invoice.vehicleNumber;
-            document.getElementById('supplyDate').value = invoice.supplyDate;
-            document.getElementById('placeOfSupply').value = invoice.placeOfSupply;
-            document.getElementById('reverseCharge').value = invoice.reverseCharge;
-
-            // Fill tax rates
-            document.getElementById('cgstRate').value = invoice.cgstRate;
-            document.getElementById('sgstRate').value = invoice.sgstRate;
-            document.getElementById('igstRate').value = invoice.igstRate;
-
-            // Clear existing rows
-            document.getElementById('productTableBody').innerHTML = '';
-
-            // Add product rows
-            invoice.products.forEach((product, index) => {
-                addProductRow();
-                const rows = document.querySelectorAll('#productTableBody tr');
-                const currentRow = rows[rows.length - 1];
-
-                currentRow.querySelector('.product-description').value = product.description;
-                currentRow.querySelector('.hsn-code').value = product.hsnCode;
-                currentRow.querySelector('.qty').value = product.qty;
-                currentRow.querySelector('.rate').value = product.rate;
-
-                calculateRowAmount(currentRow);
-            });
-
-            calculateTotals();
-
-            // Update button text for edit mode
-            document.getElementById('saveBill').innerHTML = '<i class="fas fa-save"></i> Update Bill';
+        if (!invoice) {
+            // Try getting by ID if not found by number
+            const allInvoices = await db.getInvoices();
+            const foundInvoice = allInvoices.find(inv => inv.id === invoiceId);
+            if (!foundInvoice) {
+                throw new Error('Invoice not found');
+            }
+            invoice = foundInvoice;
         }
+
+        // Fill basic invoice details
+        document.getElementById('invoiceNo').value = invoice.invoiceNumber;
+        document.getElementById('invoiceDate').value = invoice.date;
+        document.getElementById('customerPhone').value = invoice.customerPhone;
+        document.getElementById('customerName').value = invoice.customerName;
+        document.getElementById('customerAddress').value = invoice.customerAddress;
+        document.getElementById('customerGSTIN').value = invoice.customerGSTIN;
+        document.getElementById('state').value = invoice.state;
+        document.getElementById('stateCode').value = invoice.stateCode;
+        document.getElementById('transportMode').value = invoice.transportMode;
+        document.getElementById('vehicleNumber').value = invoice.vehicleNumber;
+        document.getElementById('supplyDate').value = invoice.supplyDate;
+        document.getElementById('placeOfSupply').value = invoice.placeOfSupply;
+        document.getElementById('reverseCharge').value = invoice.reverseCharge;
+
+        // Fill tax rates
+        document.getElementById('cgstRate').value = invoice.cgstRate;
+        document.getElementById('sgstRate').value = invoice.sgstRate;
+        document.getElementById('igstRate').value = invoice.igstRate;
+
+        // Clear existing rows
+        document.getElementById('productTableBody').innerHTML = '';
+
+        // Add product rows
+        invoice.products.forEach((product, index) => {
+            addProductRow();
+            const rows = document.querySelectorAll('#productTableBody tr');
+            const currentRow = rows[rows.length - 1];
+
+            currentRow.querySelector('.product-description').value = product.description;
+            currentRow.querySelector('.hsn-code').value = product.hsnCode;
+            currentRow.querySelector('.qty').value = product.qty;
+            currentRow.querySelector('.rate').value = product.rate;
+
+            calculateRowAmount(currentRow);
+        });
+
+        calculateTotals();
+
+        // Update button text for edit mode
+        document.getElementById('saveBill').innerHTML = '<i class="fas fa-save"></i> Update Bill';
     } catch (error) {
         console.error('Error loading invoice for edit:', error);
         alert('Error loading invoice data.');
@@ -337,17 +392,14 @@ async function saveBill() {
 
     const invoiceData = collectInvoiceData();
 
-    // If editing, preserve the original ID
-    if (editInvoiceId) {
-        invoiceData.id = parseInt(editInvoiceId);
-    }
-
     try {
-        await invoiceDB.saveInvoice(invoiceData);
-
         if (editInvoiceId) {
+            // Update existing invoice
+            await db.updateInvoice(editInvoiceId, invoiceData);
             alert('Bill updated successfully!');
         } else {
+            // Add new invoice
+            await db.addInvoice(invoiceData);
             alert('Bill saved successfully!');
         }
 
@@ -398,9 +450,7 @@ function collectInvoiceData() {
         totalTaxAmount: parseFloat(document.getElementById('totalTaxAmount').textContent) || 0,
         roundOff: parseFloat(document.getElementById('roundOff').textContent) || 0,
         grandTotal: parseFloat(document.getElementById('grandTotal').textContent) || 0,
-        amountInWords: document.getElementById('amountInWords').textContent,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        amountInWords: document.getElementById('amountInWords').textContent
     };
 }
 
@@ -411,15 +461,29 @@ async function resetForm() {
                 input.value = '';
             }
         });
+        
         await initializeInvoiceSuggestions();
-        document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('supplyDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('cgstRate').value = 9;
-        document.getElementById('sgstRate').value = 9;
+        
+        // Set default dates
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('invoiceDate').value = today;
+        document.getElementById('supplyDate').value = today;
+        
+        // Set default tax rates
+        document.getElementById('cgstRate').value = 2.5;
+        document.getElementById('sgstRate').value = 2.5;
         document.getElementById('igstRate').value = 0;
         document.getElementById('reverseCharge').value = 'N';
         document.getElementById('state').value = 'TAMILNADU';
         document.getElementById('stateCode').value = '33';
+
+        // Set default invoice number
+        try {
+            const nextInvoiceNumber = await db.getNextInvoiceNumber();
+            document.getElementById('invoiceNo').value = nextInvoiceNumber;
+        } catch (error) {
+            console.error('Error getting next invoice number:', error);
+        }
 
         // Clear product table
         document.getElementById('productTableBody').innerHTML = '';
@@ -438,105 +502,8 @@ async function resetForm() {
     }
 }
 
-
-// Add these new functions
-async function initializeInvoiceSuggestions() {
-    currentFinancialYear = Utils.getCurrentFinancialYear();
-    await loadInvoiceSuggestions();
-
-    // Update financial year display
-    document.getElementById('currentFinancialYear').textContent = currentFinancialYear.display;
+// PDF generation function (you'll need to implement this based on your PDF library)
+function generatePDF() {
+    // Your PDF generation code here
+    alert('PDF generation functionality to be implemented');
 }
-
-async function loadInvoiceSuggestions() {
-    const invoices = await invoiceDB.getAllInvoices();
-    const currentYearInvoices = invoices.filter(invoice =>
-        Utils.isDateInFinancialYear(invoice.date, currentFinancialYear)
-    );
-
-    // Get the highest invoice number for current financial year
-    let lastInvoiceNumber = 0;
-
-    currentYearInvoices.forEach(invoice => {
-        const invoiceNum = Utils.parseInvoiceNumber(invoice.invoiceNumber);
-        if (invoiceNum > lastInvoiceNumber) {
-            lastInvoiceNumber = invoiceNum;
-        }
-    });
-
-    invoiceSuggestions = {
-        lastInvoice: lastInvoiceNumber,
-        nextInvoice: lastInvoiceNumber + 1
-    };
-
-    updateSuggestionDisplay();
-}
-
-function updateSuggestionDisplay() {
-    if (invoiceSuggestions) {
-        const lastDisplay = invoiceSuggestions.lastInvoice > 0
-            ? Utils.formatInvoiceNumber(invoiceSuggestions.lastInvoice)
-            : 'No invoices yet';
-
-        const nextDisplay = Utils.formatInvoiceNumber(invoiceSuggestions.nextInvoice);
-
-        document.getElementById('lastInvoiceNumber').textContent = lastDisplay;
-        document.getElementById('nextInvoiceNumber').textContent = nextDisplay;
-    }
-}
-
-function applyInvoiceSuggestion() {
-    if (invoiceSuggestions) {
-        const suggestedNumber = Utils.formatInvoiceNumber(invoiceSuggestions.nextInvoice);
-        document.getElementById('invoiceNo').value = suggestedNumber;
-
-        // Show confirmation
-        const suggestionElement = document.getElementById('nextInvoiceNumber');
-        const originalText = suggestionElement.textContent;
-        suggestionElement.textContent = 'Applied!';
-        suggestionElement.style.color = '#27ae60';
-
-        setTimeout(() => {
-            suggestionElement.textContent = originalText;
-            suggestionElement.style.color = '#e74c3c';
-        }, 2000);
-    }
-}
-
-// Add event listeners for the new buttons
-document.addEventListener('DOMContentLoaded', function () {
-    // ... your existing event listeners ...
-
-    // Add these new event listeners
-    document.getElementById('applySuggestion').addEventListener('click', function () {
-        applyInvoiceSuggestion();
-    });
-
-    document.getElementById('refreshSuggestions').addEventListener('click', async function () {
-        await loadInvoiceSuggestions();
-
-        // Show refresh confirmation
-        const refreshBtn = this;
-        const originalHtml = refreshBtn.innerHTML;
-        refreshBtn.innerHTML = '<i class="fas fa-check"></i> Refreshed!';
-        refreshBtn.style.background = '#27ae60';
-
-        setTimeout(() => {
-            refreshBtn.innerHTML = originalHtml;
-            refreshBtn.style.background = '';
-        }, 2000);
-    });
-
-    // Auto-refresh suggestions when invoice date changes
-    document.getElementById('invoiceDate').addEventListener('change', async function () {
-        const selectedDate = this.value;
-        const financialYear = Utils.getCurrentFinancialYear();
-
-        // Check if the selected date is in current financial year
-        if (!Utils.isDateInFinancialYear(selectedDate, financialYear)) {
-            alert(`Note: Selected date is not in current financial year (${financialYear.display}). Invoice numbers are recycled within the financial year.`);
-        }
-
-        await loadInvoiceSuggestions();
-    });
-});

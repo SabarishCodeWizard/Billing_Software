@@ -1,191 +1,550 @@
-// db.js - IndexedDB setup and operations
-const DB_NAME = 'InvoiceDB';
-const DB_VERSION = 1;
-
-// Object stores
-const STORES = {
-    INVOICES: 'invoices',
-    CUSTOMERS: 'customers',
-    PRODUCT_SHORTCUTS: 'product_shortcuts',
-    DELETED_INVOICES: 'deleted_invoices',
-    SETTINGS: 'settings'
-};
-
-class InvoiceDB {
+// db.js - Firebase Firestore Database Operations
+class Database {
     constructor() {
         this.db = null;
+        this.initialized = false;
+        this.init();
     }
 
-    // Initialize database
     async init() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                this.db = request.result;
-                resolve(this.db);
+        try {
+            // Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyAtIjjQYwulJ1RxEOpkBZjhBbC2GyyGmw0",
+                authDomain: "fdfdff-ae786.firebaseapp.com",
+                projectId: "fdfdff-ae786",
+                storageBucket: "fdfdff-ae786.firebasestorage.app",
+                messagingSenderId: "853545168640",
+                appId: "1:853545168640:web:1ef0f66135672d9ab9cde5",
+                measurementId: "G-FBJ7JPXMHT"
             };
 
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
+            // Initialize Firebase
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
 
-                // Create object stores if they don't exist
-                if (!db.objectStoreNames.contains(STORES.INVOICES)) {
-                    const invoiceStore = db.createObjectStore(STORES.INVOICES, { keyPath: 'id', autoIncrement: true });
-                    invoiceStore.createIndex('invoiceNumber', 'invoiceNumber', { unique: true });
-                    invoiceStore.createIndex('date', 'date', { unique: false });
-                    invoiceStore.createIndex('customerPhone', 'customerPhone', { unique: false });
-                }
+            this.db = firebase.firestore();
+            this.initialized = true;
+            console.log("Firebase Firestore initialized successfully");
+        } catch (error) {
+            console.error("Error initializing Firebase:", error);
+            throw error;
+        }
+    }
 
-                if (!db.objectStoreNames.contains(STORES.CUSTOMERS)) {
-                    const customerStore = db.createObjectStore(STORES.CUSTOMERS, { keyPath: 'phone' });
-                    customerStore.createIndex('name', 'name', { unique: false });
-                }
-
-                if (!db.objectStoreNames.contains(STORES.PRODUCT_SHORTCUTS)) {
-                    const shortcutStore = db.createObjectStore(STORES.PRODUCT_SHORTCUTS, { keyPath: 'shortcut' });
-                }
-
-                if (!db.objectStoreNames.contains(STORES.DELETED_INVOICES)) {
-                    db.createObjectStore(STORES.DELETED_INVOICES, { keyPath: 'id' });
-                }
-
-                if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
-                    db.createObjectStore(STORES.SETTINGS, { keyPath: 'key' });
-                }
-            };
-        });
+    // Wait for initialization
+    async waitForInit() {
+        while (!this.initialized) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return this.db;
     }
 
     // Customer operations
-    async saveCustomer(customer) {
-        return this.addOrUpdate(STORES.CUSTOMERS, customer);
+    async addCustomer(customer) {
+        try {
+            const db = await this.waitForInit();
+            const docRef = await db.collection('customers').add({
+                ...customer,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error("Error adding customer:", error);
+            throw error;
+        }
     }
 
-    async getCustomer(phone) {
-        return this.get(STORES.CUSTOMERS, phone);
+    async getCustomers() {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('customers')
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error("Error getting customers:", error);
+            throw error;
+        }
     }
 
-    async getAllCustomers() {
-        return this.getAll(STORES.CUSTOMERS);
+    async updateCustomer(id, customer) {
+        try {
+            const db = await this.waitForInit();
+            await db.collection('customers').doc(id).update({
+                ...customer,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return true;
+        } catch (error) {
+            console.error("Error updating customer:", error);
+            throw error;
+        }
+    }
+
+    async deleteCustomer(id) {
+        try {
+            const db = await this.waitForInit();
+            await db.collection('customers').doc(id).delete();
+            return true;
+        } catch (error) {
+            console.error("Error deleting customer:", error);
+            throw error;
+        }
+    }
+
+    async getCustomerByPhone(phone) {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('customers')
+                .where('phone', '==', phone)
+                .limit(1)
+                .get();
+
+            if (snapshot.empty) {
+                return null;
+            }
+
+            const doc = snapshot.docs[0];
+            return {
+                id: doc.id,
+                ...doc.data()
+            };
+        } catch (error) {
+            console.error("Error getting customer by phone:", error);
+            throw error;
+        }
     }
 
     // Invoice operations
-    async saveInvoice(invoice) {
-        return this.addOrUpdate(STORES.INVOICES, invoice);
+    async addInvoice(invoice) {
+        try {
+            const db = await this.waitForInit();
+            const docRef = await db.collection('invoices').add({
+                ...invoice,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error("Error adding invoice:", error);
+            throw error;
+        }
     }
 
-    async getInvoice(id) {
-        return this.get(STORES.INVOICES, id);
+    async getInvoices() {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('invoices')
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error("Error getting invoices:", error);
+            throw error;
+        }
     }
 
-    async getAllInvoices() {
-        return this.getAll(STORES.INVOICES);
+    async getInvoiceByNumber(invoiceNumber) {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('invoices')
+                .where('invoiceNumber', '==', invoiceNumber)
+                .limit(1)
+                .get();
+
+            if (snapshot.empty) {
+                return null;
+            }
+
+            const doc = snapshot.docs[0];
+            return {
+                id: doc.id,
+                ...doc.data()
+            };
+        } catch (error) {
+            console.error("Error getting invoice by number:", error);
+            throw error;
+        }
+    }
+
+    async updateInvoice(id, invoice) {
+        try {
+            const db = await this.waitForInit();
+            await db.collection('invoices').doc(id).update({
+                ...invoice,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return true;
+        } catch (error) {
+            console.error("Error updating invoice:", error);
+            throw error;
+        }
     }
 
     async deleteInvoice(id) {
-        const invoice = await this.getInvoice(id);
-        await this.addOrUpdate(STORES.DELETED_INVOICES, invoice);
-        return this.delete(STORES.INVOICES, id);
+        try {
+            const db = await this.waitForInit();
+            await db.collection('invoices').doc(id).delete();
+            return true;
+        } catch (error) {
+            console.error("Error deleting invoice:", error);
+            throw error;
+        }
     }
 
-    // Product shortcut operations
-    async saveShortcut(shortcut) {
-        return this.addOrUpdate(STORES.PRODUCT_SHORTCUTS, shortcut);
+    async getInvoicesByCustomer(customerPhone) {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('invoices')
+                .where('customerPhone', '==', customerPhone)
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error("Error getting invoices by customer:", error);
+            throw error;
+        }
     }
 
-    async getShortcut(shortcut) {
-        return this.get(STORES.PRODUCT_SHORTCUTS, shortcut);
+    async getInvoicesByDateRange(startDate, endDate) {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('invoices')
+                .where('date', '>=', startDate)
+                .where('date', '<=', endDate)
+                .orderBy('date', 'desc')
+                .get();
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error("Error getting invoices by date range:", error);
+            throw error;
+        }
     }
 
-    async getAllShortcuts() {
-        return this.getAll(STORES.PRODUCT_SHORTCUTS);
+    // Product operations
+    async addProduct(product) {
+        try {
+            const db = await this.waitForInit();
+            const docRef = await db.collection('products').add({
+                ...product,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error("Error adding product:", error);
+            throw error;
+        }
     }
 
-    async deleteShortcut(shortcut) {
-        return this.delete(STORES.PRODUCT_SHORTCUTS, shortcut);
+    async getProducts() {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('products')
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error("Error getting products:", error);
+            throw error;
+        }
     }
 
-    // NEW METHOD: Update shortcut (delete old and create new)
-    async updateShortcut(oldShortcutKey, newShortcut) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const transaction = this.db.transaction([STORES.PRODUCT_SHORTCUTS], 'readwrite');
-                const store = transaction.objectStore(STORES.PRODUCT_SHORTCUTS);
-                
-                // If the shortcut key is changing, we need to delete the old one first
-                if (oldShortcutKey !== newShortcut.shortcut) {
-                    // Delete the old shortcut
-                    const deleteRequest = store.delete(oldShortcutKey);
-                    deleteRequest.onerror = () => reject(deleteRequest.error);
-                }
-                
-                // Add the new/updated shortcut
-                const addRequest = store.put(newShortcut);
-                addRequest.onerror = () => reject(addRequest.error);
-                addRequest.onsuccess = () => resolve(addRequest.result);
-                
-            } catch (error) {
-                reject(error);
-            }
-        });
+    async updateProduct(id, product) {
+        try {
+            const db = await this.waitForInit();
+            await db.collection('products').doc(id).update({
+                ...product,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return true;
+        } catch (error) {
+            console.error("Error updating product:", error);
+            throw error;
+        }
     }
+
+    async deleteProduct(id) {
+        try {
+            const db = await this.waitForInit();
+            await db.collection('products').doc(id).delete();
+            return true;
+        } catch (error) {
+            console.error("Error deleting product:", error);
+            throw error;
+        }
+    }
+
+    // Recycle bin operations
+    async addToRecycleBin(item, type) {
+        try {
+            const db = await this.waitForInit();
+            await db.collection('recycleBin').add({
+                ...item,
+                type: type,
+                deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return true;
+        } catch (error) {
+            console.error("Error adding to recycle bin:", error);
+            throw error;
+        }
+    }
+
+    async getRecycleBinItems() {
+        try {
+            const db = await this.waitForInit();
+            const snapshot = await db.collection('recycleBin')
+                .orderBy('deletedAt', 'desc')
+                .get();
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error("Error getting recycle bin items:", error);
+            throw error;
+        }
+    }
+
+async restoreFromRecycleBin(originalId, type) {
+    try {
+        const db = await this.waitForInit();
+        console.log('Looking for item in recycle bin with original ID:', originalId);
+
+        // Search for the item by its original ID in the recycle bin collection
+        const snapshot = await db.collection('recycleBin')
+            .where('id', '==', originalId)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) {
+            console.error('Item not found in recycle bin with original ID:', originalId);
+            throw new Error("Item not found in recycle bin");
+        }
+
+        const itemDoc = snapshot.docs[0];
+        const recycleBinId = itemDoc.id; // This is the Firestore document ID in recycleBin collection
+        const item = itemDoc.data();
+        
+        console.log('Found item in recycle bin:', item);
+
+        // Remove Firebase-specific fields and the recycle bin specific fields
+        const {
+            type: itemType,
+            id: docId,
+            deletedAt,
+            ...itemData
+        } = item;
+
+        console.log('Cleaned item data for restoration:', itemData);
+
+        // Restore to appropriate collection
+        switch (type || itemType) {
+            case 'customer':
+                await this.addCustomer(itemData);
+                break;
+            case 'invoice':
+                await this.addInvoice(itemData);
+                break;
+            case 'product':
+                await this.addProduct(itemData);
+                break;
+            default:
+                throw new Error("Unknown item type: " + (type || itemType));
+        }
+
+        // Remove from recycle bin using the Firestore document ID
+        await db.collection('recycleBin').doc(recycleBinId).delete();
+        console.log('Item successfully restored and removed from recycle bin');
+        return true;
+    } catch (error) {
+        console.error("Error restoring from recycle bin:", error);
+        throw error;
+    }
+}
+async permanentDeleteFromRecycleBin(originalId) {
+    try {
+        const db = await this.waitForInit();
+        console.log('Permanently deleting item from recycle bin with original ID:', originalId);
+
+        // Search for the item by its original ID
+        const snapshot = await db.collection('recycleBin')
+            .where('id', '==', originalId)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) {
+            console.error('Item not found in recycle bin for deletion:', originalId);
+            throw new Error("Item not found in recycle bin");
+        }
+
+        const itemDoc = snapshot.docs[0];
+        await db.collection('recycleBin').doc(itemDoc.id).delete();
+        console.log('Item permanently deleted from recycle bin');
+        return true;
+    } catch (error) {
+        console.error("Error permanently deleting from recycle bin:", error);
+        throw error;
+    }
+}
 
     // Settings operations
-    async saveSetting(key, value) {
-        return this.addOrUpdate(STORES.SETTINGS, { key, value });
+    async saveSettings(settings) {
+        try {
+            const db = await this.waitForInit();
+            await db.collection('settings').doc('appSettings').set({
+                ...settings,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return true;
+        } catch (error) {
+            console.error("Error saving settings:", error);
+            throw error;
+        }
     }
 
-    async getSetting(key) {
-        return this.get(STORES.SETTINGS, key);
+    async getSettings() {
+        try {
+            const db = await this.waitForInit();
+            const doc = await db.collection('settings').doc('appSettings').get();
+
+            if (doc.exists) {
+                return doc.data();
+            } else {
+                // Return default settings
+                return {
+                    companyName: "RSK ENTERPRISES",
+                    address: "76(3) Padmavathipuram, Angeripalayam Road, Tirupur 641-602",
+                    phone: "8608127349",
+                    gstin: "",
+                    bankDetails: {
+                        accountName: "RSK ENTERPRISES",
+                        bank: "CANARA BANK",
+                        accountNumber: "120033201829",
+                        ifsc: "CNRBOO16563"
+                    }
+                };
+            }
+        } catch (error) {
+            console.error("Error getting settings:", error);
+            throw error;
+        }
     }
 
-    // Generic database operations
-    async addOrUpdate(storeName, data) {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([storeName], 'readwrite');
-            const store = transaction.objectStore(storeName);
-            const request = store.put(data);
+    // Utility methods
+    async getNextInvoiceNumber() {
+        try {
+            const db = await this.waitForInit();
+            const currentYear = new Date().getFullYear().toString().slice(-2);
 
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
-        });
+            // Get the highest invoice number for current year
+            const snapshot = await db.collection('invoices')
+                .where('invoiceNumber', '>=', `001/${currentYear}`)
+                .where('invoiceNumber', '<=', `999/${currentYear}`)
+                .orderBy('invoiceNumber', 'desc')
+                .limit(1)
+                .get();
+
+            if (snapshot.empty) {
+                return `001/${currentYear}`;
+            }
+
+            const lastInvoice = snapshot.docs[0].data();
+            const lastNumber = parseInt(lastInvoice.invoiceNumber.split('/')[0]);
+            const nextNumber = (lastNumber + 1).toString().padStart(3, '0');
+
+            return `${nextNumber}/${currentYear}`;
+        } catch (error) {
+            console.error("Error getting next invoice number:", error);
+            throw error;
+        }
     }
 
-    async get(storeName, key) {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([storeName], 'readonly');
-            const store = transaction.objectStore(storeName);
-            const request = store.get(key);
+    // Backup and export operations
+    async exportData() {
+        try {
+            const db = await this.waitForInit();
 
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
-        });
+            const [customers, invoices, products, settings] = await Promise.all([
+                this.getCustomers(),
+                this.getInvoices(),
+                this.getProducts(),
+                this.getSettings()
+            ]);
+
+            return {
+                customers,
+                invoices,
+                products,
+                settings,
+                exportDate: new Date().toISOString()
+            };
+        } catch (error) {
+            console.error("Error exporting data:", error);
+            throw error;
+        }
     }
 
-    async getAll(storeName) {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([storeName], 'readonly');
-            const store = transaction.objectStore(storeName);
-            const request = store.getAll();
+    async importData(data) {
+        try {
+            // Import customers
+            if (data.customers) {
+                for (const customer of data.customers) {
+                    await this.addCustomer(customer);
+                }
+            }
 
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
-        });
-    }
+            // Import products
+            if (data.products) {
+                for (const product of data.products) {
+                    await this.addProduct(product);
+                }
+            }
 
-    async delete(storeName, key) {
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([storeName], 'readwrite');
-            const store = transaction.objectStore(storeName);
-            const request = store.delete(key);
+            // Import invoices
+            if (data.invoices) {
+                for (const invoice of data.invoices) {
+                    await this.addInvoice(invoice);
+                }
+            }
 
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => resolve(request.result);
-        });
+            // Import settings
+            if (data.settings) {
+                await this.saveSettings(data.settings);
+            }
+
+            return true;
+        } catch (error) {
+            console.error("Error importing data:", error);
+            throw error;
+        }
     }
 }
 
 // Create global database instance
-const invoiceDB = new InvoiceDB();
+const db = new Database();

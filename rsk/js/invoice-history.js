@@ -1,17 +1,27 @@
 // invoice-history.js - Invoice history page functionality
 document.addEventListener('DOMContentLoaded', async function () {
-  await invoiceDB.init();
+  await db.waitForInit();
   loadInvoices();
 
-  // Filter functionality
-  document.getElementById('filterBtn').addEventListener('click', loadInvoices);
-  document.getElementById('clearFilters').addEventListener('click', clearFilters);
+  // Filter functionality with null checks
+  const filterBtn = document.getElementById('filterBtn');
+  const clearFiltersBtn = document.getElementById('clearFilters');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-  // Logout
-  document.getElementById('logoutBtn').addEventListener('click', function () {
-    sessionStorage.removeItem('isLoggedIn');
-    window.location.href = 'login.html';
-  });
+  if (filterBtn) {
+    filterBtn.addEventListener('click', loadInvoices);
+  }
+
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', clearFilters);
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      sessionStorage.removeItem('isLoggedIn');
+      window.location.href = 'login.html';
+    });
+  }
 
   // Modal close buttons
   document.querySelectorAll('.close').forEach(closeBtn => {
@@ -29,17 +39,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 async function loadInvoices() {
-  const invoices = await invoiceDB.getAllInvoices();
-  const filteredInvoices = filterInvoices(invoices);
-  displayInvoices(filteredInvoices);
+  try {
+    const invoices = await db.getInvoices();
+    const filteredInvoices = filterInvoices(invoices);
+    displayInvoices(filteredInvoices);
+  } catch (error) {
+    console.error('Error loading invoices:', error);
+    alert('Error loading invoices. Please try again.');
+  }
 }
-// invoice-history.js - Replace the shareInvoice function
-
 
 function filterInvoices(invoices) {
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  const dateFrom = document.getElementById('dateFrom').value;
-  const dateTo = document.getElementById('dateTo').value;
+  const searchInput = document.getElementById('searchInput');
+  const dateFromInput = document.getElementById('dateFrom');
+  const dateToInput = document.getElementById('dateTo');
+
+  const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+  const dateFrom = dateFromInput ? dateFromInput.value : '';
+  const dateTo = dateToInput ? dateToInput.value : '';
 
   return invoices.filter(invoice => {
     // Search filter
@@ -63,6 +80,11 @@ function filterInvoices(invoices) {
 function displayInvoices(invoices) {
   const invoiceList = document.getElementById('invoiceList');
 
+  if (!invoiceList) {
+    console.error('Invoice list container not found');
+    return;
+  }
+
   if (invoices.length === 0) {
     invoiceList.innerHTML = '<p>No invoices found.</p>';
     return;
@@ -80,29 +102,47 @@ function displayInvoices(invoices) {
                 <p><strong>Amount:</strong> ₹${Utils.formatCurrency(invoice.grandTotal)}</p>
             </div>
             <div class="invoice-actions">
-                <button class="btn-view" onclick="viewInvoice(${invoice.id})">View</button>
-                <button class="btn-edit" onclick="editInvoice(${invoice.id})">Edit</button>
-                <button class="btn-share" onclick="shareInvoice(${invoice.id})">Share</button>
-                <button class="btn-delete" onclick="confirmDelete(${invoice.id}, '${invoice.invoiceNumber}')">Delete</button>
+                <button class="btn-view" onclick="viewInvoice('${invoice.id}')">View</button>
+                <button class="btn-edit" onclick="editInvoice('${invoice.id}')">Edit</button>
+                <button class="btn-share" onclick="shareInvoice('${invoice.id}')">Share</button>
+                <button class="btn-delete" onclick="confirmDelete('${invoice.id}', '${invoice.invoiceNumber}')">Delete</button>
             </div>
         </div>
     `).join('');
 }
 
 function clearFilters() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('dateFrom').value = '';
-  document.getElementById('dateTo').value = '';
+  const searchInput = document.getElementById('searchInput');
+  const dateFromInput = document.getElementById('dateFrom');
+  const dateToInput = document.getElementById('dateTo');
+
+  if (searchInput) searchInput.value = '';
+  if (dateFromInput) dateFromInput.value = '';
+  if (dateToInput) dateToInput.value = '';
+  
   loadInvoices();
 }
-
-
 
 let currentViewModal = null;
 
 async function viewInvoice(id) {
-  const invoice = await invoiceDB.getInvoice(id);
-  showInvoiceModal(invoice);
+  try {
+    const invoice = await db.getInvoiceByNumber(id);
+    if (!invoice) {
+      // If not found by number, try by ID
+      const allInvoices = await db.getInvoices();
+      const foundInvoice = allInvoices.find(inv => inv.id === id);
+      if (!foundInvoice) {
+        throw new Error('Invoice not found');
+      }
+      showInvoiceModal(foundInvoice);
+    } else {
+      showInvoiceModal(invoice);
+    }
+  } catch (error) {
+    console.error('Error viewing invoice:', error);
+    alert('Error loading invoice details. Please try again.');
+  }
 }
 
 function showInvoiceModal(invoice) {
@@ -124,7 +164,9 @@ function showInvoiceModal(invoice) {
 
   // Add close functionality
   const closeBtn = modal.querySelector('.close-invoice-modal');
-  closeBtn.addEventListener('click', closeInvoiceModal);
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeInvoiceModal);
+  }
 
   // Close when clicking outside
   modal.addEventListener('click', function (e) {
@@ -300,7 +342,7 @@ function generateInvoiceModalHTML(invoice) {
                 </div>
             </div>
             <div class="invoice-modal-footer">
-                <button class="btn-print" onclick="printInvoice(${invoice.id})">Print</button>
+                <button class="btn-print" onclick="printInvoice('${invoice.id}')">Print</button>
                 <button class="btn-close" onclick="closeInvoiceModal()">Close</button>
             </div>
         </div>
@@ -311,51 +353,6 @@ function printInvoice(invoiceId) {
   // You can implement print functionality here
   window.print();
 }
-function generateInvoicePreviewHTML(invoice) {
-  return `
-        <div class="preview-content">
-            <div class="preview-header">
-                <h4>Invoice #${invoice.invoiceNumber}</h4>
-                <span>${Utils.formatDate(invoice.date)}</span>
-            </div>
-            <div class="preview-details">
-                <p><strong>Customer:</strong> ${invoice.customerName}</p>
-                <p><strong>Phone:</strong> ${invoice.customerPhone}</p>
-                <p><strong>Address:</strong> ${invoice.customerAddress}</p>
-                <p><strong>GSTIN:</strong> ${invoice.customerGSTIN || 'N/A'}</p>
-            </div>
-            <div class="preview-products">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Qty</th>
-                            <th>Rate</th>
-                            <th>Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${invoice.products.map(product => `
-                            <tr>
-                                <td>${product.description}</td>
-                                <td>${product.qty}</td>
-                                <td>₹${Utils.formatCurrency(product.rate)}</td>
-                                <td>₹${Utils.formatCurrency(product.amount)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-            <div class="preview-totals">
-                <p><strong>Subtotal:</strong> ₹${Utils.formatCurrency(invoice.subTotal)}</p>
-                <p><strong>CGST (${invoice.cgstRate}%):</strong> ₹${Utils.formatCurrency(invoice.cgstAmount)}</p>
-                <p><strong>SGST (${invoice.sgstRate}%):</strong> ₹${Utils.formatCurrency(invoice.sgstAmount)}</p>
-                ${invoice.igstRate > 0 ? `<p><strong>IGST (${invoice.igstRate}%):</strong> ₹${Utils.formatCurrency(invoice.igstAmount)}</p>` : ''}
-                <p><strong>Grand Total:</strong> ₹${Utils.formatCurrency(invoice.grandTotal)}</p>
-            </div>
-        </div>
-    `;
-}
 
 function editInvoice(id) {
   // Navigate to main page with edit parameter
@@ -364,12 +361,24 @@ function editInvoice(id) {
 
 function confirmDelete(id, invoiceNumber) {
     const modal = document.getElementById('deleteModal');
-    document.getElementById('invoiceToDelete').textContent = invoiceNumber;
-    document.getElementById('confirmInvoiceNumber').value = '';
-    modal.style.display = 'block';
+    if (!modal) {
+        console.error('Delete modal not found');
+        return;
+    }
 
+    const invoiceToDelete = document.getElementById('invoiceToDelete');
     const confirmInput = document.getElementById('confirmInvoiceNumber');
     const confirmBtn = document.getElementById('confirmDelete');
+    const cancelBtn = document.getElementById('cancelDelete');
+
+    if (!invoiceToDelete || !confirmInput || !confirmBtn || !cancelBtn) {
+        console.error('Delete modal elements not found');
+        return;
+    }
+
+    invoiceToDelete.textContent = invoiceNumber;
+    confirmInput.value = '';
+    modal.style.display = 'block';
 
     // Enable/disable button based on input
     function validateInput() {
@@ -402,7 +411,7 @@ function confirmDelete(id, invoiceNumber) {
         }
     };
 
-    document.getElementById('cancelDelete').onclick = function () {
+    cancelBtn.onclick = function () {
         modal.style.display = 'none';
     };
 
@@ -414,8 +423,22 @@ function confirmDelete(id, invoiceNumber) {
 
 async function deleteInvoice(id) {
     try {
-        await invoiceDB.deleteInvoice(id);
-        document.getElementById('deleteModal').style.display = 'none';
+        // Get the invoice first to save to recycle bin
+        const allInvoices = await db.getInvoices();
+        const invoice = allInvoices.find(inv => inv.id === id);
+        
+        if (invoice) {
+            // Add to recycle bin
+            await db.addToRecycleBin(invoice, 'invoice');
+            
+            // Delete from main collection
+            await db.deleteInvoice(id);
+        }
+        
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+            deleteModal.style.display = 'none';
+        }
         
         // Show temporary success message
         const successMsg = document.createElement('div');
@@ -444,13 +467,20 @@ async function deleteInvoice(id) {
         alert('Error moving invoice to recycle bin. Please try again.');
     }
 }
+
 async function shareInvoice(id) {
     try {
-        const invoice = await invoiceDB.getInvoice(id);
+        const allInvoices = await db.getInvoices();
+        const invoice = allInvoices.find(inv => inv.id === id);
+        
+        if (!invoice) {
+            throw new Error('Invoice not found');
+        }
+        
         showShareModal(invoice);
     } catch (error) {
         console.error('Error sharing invoice:', error);
-        showSuccessToast('Error sharing invoice. Please try again.', 'error');
+        alert('Error sharing invoice. Please try again.');
     }
 }
 
@@ -474,19 +504,28 @@ function showShareModal(invoice) {
 
     // Add event listeners
     const closeBtn = modal.querySelector('.close-share-modal');
-    closeBtn.addEventListener('click', closeShareModal);
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeShareModal);
+    }
 
     // Share option buttons
-    modal.querySelector('#shareProfessional').addEventListener('click', function() {
-        Utils.shareCompleteInvoice(invoice);
-        closeShareModal();
-    });
+    const shareProfessionalBtn = modal.querySelector('#shareProfessional');
+    const shareSimpleBtn = modal.querySelector('#shareSimple');
 
-    modal.querySelector('#shareSimple').addEventListener('click', function() {
-        const simpleMessage = Utils.generateSimpleInvoiceMessage(invoice);
-        Utils.shareOnWhatsApp(invoice.customerPhone, simpleMessage);
-        closeShareModal();
-    });
+    if (shareProfessionalBtn) {
+        shareProfessionalBtn.addEventListener('click', function() {
+            Utils.shareCompleteInvoice(invoice);
+            closeShareModal();
+        });
+    }
+
+    if (shareSimpleBtn) {
+        shareSimpleBtn.addEventListener('click', function() {
+            const simpleMessage = Utils.generateSimpleInvoiceMessage(invoice);
+            Utils.shareOnWhatsApp(invoice.customerPhone, simpleMessage);
+            closeShareModal();
+        });
+    }
 
     // Close when clicking outside
     modal.addEventListener('click', function(e) {
